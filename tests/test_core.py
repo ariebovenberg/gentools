@@ -1,4 +1,5 @@
 import inspect
+import pickle
 import types
 from functools import reduce
 
@@ -54,58 +55,70 @@ def emptygen():
     return 99
 
 
-def test_reusable():
+@gentools.reusable
+def mygen(a: int, *, foo):
+    yield a
+    yield foo
 
-    class mywrapper:
-        def __init__(self, func):
-            self.__wrapped__ = func
-            self.__signature__ = inspect.signature(func).replace(
-                return_annotation=str)
 
-        def __call__(self, *args, **kwargs):
-            inner = self.__wrapped__(*args, **kwargs)
-            yield str(next(inner))
+class TestReusable:
 
-    @gentools.reusable
-    @mywrapper  # dummy to test combining with other decorators
-    def gentype(a: int, b: float, *cs, d, e=5, **fs):
-        """my docstring"""
-        return (yield sum([a, b, *cs, d, e, a]))
+    def test_picklable(self):
+        gen = mygen(4, foo=5)
+        assert pickle.loads(pickle.dumps(gen)) == gen
 
-    gentype.__qualname__ = 'mymodule.gentype'
+    def test_example(self):
 
-    assert issubclass(gentype, gentools.Generable)
-    assert isinstance(inspect.unwrap, types.FunctionType)
-    gentype.__name__ == 'myfunc'
-    gentype.__doc__ == 'my docstring'
-    gentype.__module__ == 'test_core'
-    gen = gentype(4, 5, d=6, foo=10)
+        class mywrapper:
+            def __init__(self, func):
+                self.__wrapped__ = func
+                self.__signature__ = inspect.signature(func).replace(
+                    return_annotation=str)
 
-    assert {'a', 'b', 'cs', 'd', 'e', 'fs'} < set(dir(gen))
-    assert gen.a == 4
-    assert gen.b == 5
-    assert gen.cs == ()
-    assert gen.e == 5
-    assert gen.fs == {'foo': 10}
+            def __call__(self, *args, **kwargs):
+                inner = self.__wrapped__(*args, **kwargs)
+                yield str(next(inner))
 
-    assert next(iter(gen)) == '24'
+        @gentools.reusable
+        @mywrapper  # dummy to test combining with other decorators
+        def gentype(a: int, b: float, *cs, d, e=5, **fs):
+            """my docstring"""
+            return (yield sum([a, b, *cs, d, e, a]))
 
-    othergen = gentype(4, b=5, d=6, e=5, foo=10)
-    assert gen == othergen
-    assert not gen != othergen
-    assert hash(gen) == hash(othergen)
+        gentype.__qualname__ = 'mymodule.gentype'
 
-    assert repr(gen) == ("mymodule.gentype("
-                         "a=4, b=5, cs=(), d=6, e=5, fs={'foo': 10})")
+        assert issubclass(gentype, gentools.Generable)
+        assert isinstance(inspect.unwrap, types.FunctionType)
+        gentype.__name__ == 'myfunc'
+        gentype.__doc__ == 'my docstring'
+        gentype.__module__ == 'test_core'
+        gen = gentype(4, 5, d=6, foo=10)
 
-    assert not gen == gentype(3, 4, 5, d=10)
-    assert gen != gentype(1, 2, d=7)
+        assert {'a', 'b', 'cs', 'd', 'e', 'fs'} < set(dir(gen))
+        assert gen.a == 4
+        assert gen.b == 5
+        assert gen.cs == ()
+        assert gen.e == 5
+        assert gen.fs == {'foo': 10}
 
-    assert not gen == object()
-    assert gen != object()
+        assert next(iter(gen)) == '24'
 
-    changed = gen.replace(b=9)
-    assert changed == gentype(4, 9, d=6, foo=10)
+        othergen = gentype(4, b=5, d=6, e=5, foo=10)
+        assert gen == othergen
+        assert not gen != othergen
+        assert hash(gen) == hash(othergen)
+
+        assert repr(gen) == ("mymodule.gentype("
+                            "a=4, b=5, cs=(), d=6, e=5, fs={'foo': 10})")
+
+        assert not gen == gentype(3, 4, 5, d=10)
+        assert gen != gentype(1, 2, d=7)
+
+        assert not gen == object()
+        assert gen != object()
+
+        changed = gen.replace(b=9)
+        assert changed == gentype(4, 9, d=6, foo=10)
 
 
 class TestGenreturn:
