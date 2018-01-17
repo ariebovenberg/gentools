@@ -7,6 +7,7 @@ from itertools import starmap
 from operator import attrgetter, itemgetter
 
 from .utils import compose
+from .__about__ import __author__, __copyright__, __version__  # noqa
 
 __all__ = [
     'nest',
