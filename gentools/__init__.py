@@ -1,6 +1,7 @@
 import abc
 import inspect
 import typing as t
+from types import GeneratorType
 from copy import copy
 from functools import partial, reduce
 from itertools import starmap
@@ -30,12 +31,22 @@ T_return = t.TypeVar('T_return')
 
 
 class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
-    """ABC for query-like objects.
+    """ABC for generable objects.
     Any object where ``__iter__`` returns a generator implements it"""
 
     @abc.abstractmethod
     def __iter__(self) -> t.Generator[T_yield, T_send, T_return]:
         """a generator which resolves the query"""
+        raise NotImplementedError()
+
+
+Generable.register(GeneratorType)
+
+
+class GeneratorCallable(t.Generic[T_yield, T_send, T_return]):
+    """ABC for callables which return a generator"""
+    def __call__(self, *args, **kwargs) -> t.Generator[
+            T_yield, T_send, T_return]:
         raise NotImplementedError()
 
 
@@ -81,7 +92,19 @@ class ReusableGenerator(Generable):
         return self.__class__(*copied.args, **copied.kwargs)
 
 
-def reusable(func: t.Callable) -> t.Type[Generable]:
+def reusable(func: GeneratorCallable[T_yield, T_send, T_return]) -> t.Type[
+        Generable[T_yield, T_send, T_return]]:
+    """create a reusable class from a generator callable
+
+    Parameters
+    ----------
+    func
+        the callable to wrap
+
+    Note
+    ----
+    the callable must have an inspectable signature
+    """
     sig = inspect.signature(func)
     origin = inspect.unwrap(func)
     return type(
