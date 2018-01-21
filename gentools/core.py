@@ -12,8 +12,9 @@ __all__ = [
     'imap_yield',
     'imap_send',
     'imap_return',
+    'ipipe',
     'reusable',
-    'pipe',
+
     'nested',
     'yieldmapped',
     'sendmapped',
@@ -142,8 +143,8 @@ _Pipe = t.Callable[[T_yield], t.Generator[T_yield_new,
                                           T_send]]
 
 
-def pipe(gen: Generable[T_yield, T_send, T_return],
-         thru: _Pipe) -> t.Generator[T_yield_new, T_send_new, T_return]:
+def ipipe(gen: Generable[T_yield, T_send, T_return],
+          thru: _Pipe) -> t.Generator[T_yield_new, T_send_new, T_return]:
     """create a new generator by piping yield/send through another generator
 
     Parameters
@@ -167,7 +168,7 @@ class nested:
         self._genfuncs = genfuncs
 
     def __call__(self, func):
-        return compose(partial(reduce, pipe, self._genfuncs), func)
+        return compose(partial(reduce, ipipe, self._genfuncs), func)
 
 
 # TODO: docs, types

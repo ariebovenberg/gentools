@@ -221,12 +221,12 @@ class TestPipe:
 
     def test_empty(self):
         try:
-            next(gentools.pipe(emptygen(), try_until_positive))
+            next(gentools.ipipe(emptygen(), try_until_positive))
         except StopIteration as e:
             assert e.value == 99
 
     def test_simple(self):
-        piped = gentools.pipe(mymax(4), try_until_positive)
+        piped = gentools.ipipe(mymax(4), try_until_positive)
 
         assert next(piped) == 4
         assert piped.send(7) == 7
@@ -237,7 +237,7 @@ class TestPipe:
         assert gentools.sendreturn(piped, 102) == 306
 
     def test_any_iterable(self):
-        piped = gentools.pipe(MyMax(4), try_until_positive)
+        piped = gentools.ipipe(MyMax(4), try_until_positive)
 
         assert next(piped) == 4
         assert piped.send(7) == 7
@@ -249,7 +249,7 @@ class TestPipe:
 
     def test_accumulate(self):
 
-        gen = reduce(gentools.pipe,
+        gen = reduce(gentools.ipipe,
                      [try_until_even, try_until_positive],
                      mymax(4))
 
@@ -268,7 +268,7 @@ def test_combined():
             int,
             gentools.imap_yield(
                 str,
-                gentools.pipe(
+                gentools.ipipe(
                     mymax(4),
                     try_until_even))))
 
