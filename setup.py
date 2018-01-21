@@ -19,7 +19,7 @@ history = read_local_file('HISTORY.rst')
 setup(
     name='gentools',
     version=metadata['__version__'],
-    description='like itertools, but for generators with send() and throw()',
+    description=metadata['__description__'],
     license='MIT',
     long_description=readme + '\n\n' + history,
     url='https://github.com/ariebovenberg/gentools',

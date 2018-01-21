@@ -4,6 +4,11 @@ Release history
 development
 +++++++++++
 
+0.2.0 (2018-01-21)
+++++++++++++++++++
+
+- reorganized modules, improved docs, renamed functions.
+
 0.1.0 (2018-01-17)
 ++++++++++++++++++
 
