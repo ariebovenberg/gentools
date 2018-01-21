@@ -23,6 +23,8 @@ __all__ = [
 ]
 
 T_mapped = t.TypeVar('T_mapped')
+T_yield_new = t.TypeVar('T_yield_new')
+T_send_new = t.TypeVar('T_yield_new')
 
 
 def reusable(func: GeneratorCallable[T_yield, T_send, T_return]) -> t.Type[
@@ -135,8 +137,22 @@ def imap_return(func: t.Callable[[T_return], T_mapped],
     return func((yield from gen))
 
 
-# TODO: type annotations, docstring
-def pipe(gen, thru):
+_Pipe = t.Callable[[T_yield], t.Generator[T_yield_new,
+                                          T_send_new,
+                                          T_send]]
+
+
+def pipe(gen: Generable[T_yield, T_send, T_return],
+         thru: _Pipe) -> t.Generator[T_yield_new, T_send_new, T_return]:
+    """create a new generator by piping yield/send through another generator
+
+    Parameters
+    ----------
+    gen
+        the original generator
+    thru
+        the piping generator callable
+    """
     gen = iter(gen)
     assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
     item = next(gen)
