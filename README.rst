@@ -34,7 +34,7 @@ Examples
 
 .. code-block:: python
 
-   >>> @reusable()
+   >>> @reusable
    ... def countdown(value, step):
    ...     while value > 0:
    ...         yield value
