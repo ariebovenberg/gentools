@@ -25,7 +25,7 @@ Gentools
     :alt: Maintainability
 
 
-like itertools, but for generators
+like itertools, for generators, generator functions, and generator-based coroutines.
 
 Examples
 --------
