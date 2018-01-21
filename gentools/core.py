@@ -1,14 +1,11 @@
-import abc
+"""itertools for generators with send() and throw()"""
 import inspect
-import sys
 import typing as t
-from collections import OrderedDict
-from types import GeneratorType
-from copy import copy
 from functools import partial, reduce
-from itertools import starmap
 from operator import attrgetter, itemgetter
 
+from .types import (GeneratorCallable, ReusableGenerator,
+                    T_yield, T_send, T_return)
 from .utils import compose
 
 __all__ = [
@@ -20,114 +17,20 @@ __all__ = [
     'yieldmapped',
     'sendmapped',
     'returnmapped',
-    'Generable',
     'reusable',
-    'ReusableGenerator',
-    'genresult',
+    'sendreturn',
     'oneyield',
 ]
 
 
-# copied from BoundArguments.apply_defaults from python3.5
-if sys.version_info < (3, 5):  # pragma: no cover
-    def _apply_defaults(bound_sig):
-        arguments = bound_sig.arguments
-        new_arguments = []
-        for name, param in bound_sig._signature.parameters.items():
-            try:
-                new_arguments.append((name, arguments[name]))
-            except KeyError:
-                if param.default is not inspect._empty:
-                    val = param.default
-                elif param.kind is inspect._VAR_POSITIONAL:
-                    val = ()
-                elif param.kind is inspect._VAR_KEYWORD:
-                    val = {}
-                else:
-                    # This BoundArguments was likely produced by
-                    # Signature.bind_partial().
-                    continue
-                new_arguments.append((name, val))
-        bound_sig.arguments = OrderedDict(new_arguments)
-else:  # pragma: no cover
-    _apply_defaults = inspect.BoundArguments.apply_defaults
-
-
-T_yield = t.TypeVar('T_yield')
-T_send = t.TypeVar('T_send')
-T_return = t.TypeVar('T_return')
-
-
-class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
-    """ABC for generable objects.
-    Any object where ``__iter__`` returns a generator implements it"""
-
-    @abc.abstractmethod
-    def __iter__(self) -> t.Generator[T_yield, T_send, T_return]:
-        """a generator which resolves the query"""
-        raise NotImplementedError()
-
-
-Generable.register(GeneratorType)
-
-
-class GeneratorCallable(t.Generic[T_yield, T_send, T_return]):
-    """ABC for callables which return a generator"""
-    def __call__(self, *args, **kwargs) -> t.Generator[
-            T_yield, T_send, T_return]:
-        raise NotImplementedError()
-
-
-class ReusableGenerator(Generable):
-    """abstract base for reusable generator functions
-
-    Warning
-    -------
-    do not subclass directly.
-    Create a subclass with the :func:`reusable` decorator.
-    """
-    __slots__ = '_bound_args'
-
-    def __init__(self, *args, **kwargs):
-        self._bound_args = self.__signature__.bind(*args, **kwargs)
-        _apply_defaults(self._bound_args)
-
-    def __iter__(self):
-        return self.__wrapped__(*self._bound_args.args,
-                                **self._bound_args.kwargs)
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self._bound_args.arguments == other._bound_args.arguments
-        return NotImplemented
-
-    def __ne__(self, other):
-        if isinstance(other, self.__class__):
-            return not self == other
-        return NotImplemented
-
-    def __repr__(self):
-        fields = starmap('{}={!r}'.format, self._bound_args.arguments.items())
-        return '{}({})'.format(self.__class__.__qualname__, ', '.join(fields))
-
-    def __hash__(self):
-        return hash((self._bound_args.args,
-                     tuple(self._bound_args.kwargs.items())))
-
-    def replace(self, **kwargs):
-        copied = copy(self._bound_args)
-        copied.arguments.update(**kwargs)
-        return self.__class__(*copied.args, **copied.kwargs)
-
-
 def reusable(func: GeneratorCallable[T_yield, T_send, T_return]) -> t.Type[
-        Generable[T_yield, T_send, T_return]]:
-    """create a reusable class from a generator callable
+        ReusableGenerator[T_yield, T_send, T_return]]:
+    """create a reusable class from a generator function
 
     Parameters
     ----------
     func
-        the callable to wrap
+        the function to wrap
 
     Note
     ----
@@ -145,25 +48,36 @@ def reusable(func: GeneratorCallable[T_yield, T_send, T_return]) -> t.Type[
             ('__signature__', sig),
             ('__wrapped__',   staticmethod(func)),
         ] + [
-            (name, property(compose(
-                itemgetter(name),
-                attrgetter('_bound_args.arguments'))))
+            (name, property(compose(itemgetter(name),
+                                    attrgetter('_bound_args.arguments'))))
             for name in sig.parameters
         ]))
 
 
-# TODO: type annotations
-def genresult(gen, value):
-    """send an item into a generator expecting a final return value"""
+def sendreturn(gen: t.Generator[T_yield, T_send, T_return],
+               value: T_send) -> T_return:
+    """send an item into a generator expecting a final return value
+
+    Parameters
+    ----------
+    gen
+        the generator to send the value to
+    value
+        the value to send
+
+    Raises
+    ------
+    RuntimeError
+        if the generator did not return as expected
+    """
     try:
         gen.send(value)
     except StopIteration as e:
         return e.value
     else:
-        raise TypeError('generator did not return as expected')
+        raise RuntimeError('generator did not return as expected')
 
 
-# TODO: types, docstring
 def yieldmap(func, gen) -> t.Generator:
     gen = iter(gen)
     assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'

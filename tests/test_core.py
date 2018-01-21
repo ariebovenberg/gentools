@@ -135,7 +135,7 @@ class TestGenreturn:
 
         gen = mygen(4)
         assert next(gen) == 5
-        assert gentools.genresult(gen, 0) == 'foo'
+        assert gentools.sendreturn(gen, 0) == 'foo'
 
     def test_no_return(self):
 
@@ -146,8 +146,8 @@ class TestGenreturn:
 
         gen = mygen(4)
         assert next(gen) == 5
-        with pytest.raises(TypeError, match='did not return'):
-            gentools.genresult(gen, 1)
+        with pytest.raises(RuntimeError, match='did not return'):
+            gentools.sendreturn(gen, 1)
 
 
 class TestYieldMap:
@@ -164,7 +164,7 @@ class TestYieldMap:
         assert next(mapped) == '4'
         assert mapped.send(7) == '7'
         assert mapped.send(3) == '7'
-        assert gentools.genresult(mapped, 103) == 309
+        assert gentools.sendreturn(mapped, 103) == 309
 
 
 class TestSendMap:
@@ -181,7 +181,7 @@ class TestSendMap:
         assert next(mapped) == 4
         assert mapped.send('7') == 7
         assert mapped.send(7.3) == 7
-        assert gentools.genresult(mapped, '104') == 312
+        assert gentools.sendreturn(mapped, '104') == 312
 
     def test_any_iterable(self):
         mapped = gentools.sendmap(int, MyMax(4))
@@ -189,7 +189,7 @@ class TestSendMap:
         assert next(mapped) == 4
         assert mapped.send('7') == 7
         assert mapped.send(7.3) == 7
-        assert gentools.genresult(mapped, '104') == 312
+        assert gentools.sendreturn(mapped, '104') == 312
 
 
 class TestReturnMap:
@@ -206,7 +206,7 @@ class TestReturnMap:
         assert next(mapped) == 4
         assert mapped.send(7) == 7
         assert mapped.send(4) == 7
-        assert gentools.genresult(mapped, 104) == '312'
+        assert gentools.sendreturn(mapped, 104) == '312'
 
     def test_any_iterable(self):
         mapped = gentools.returnmap(str, MyMax(4))
@@ -214,7 +214,7 @@ class TestReturnMap:
         assert next(mapped) == 4
         assert mapped.send(7) == 7
         assert mapped.send(4) == 7
-        assert gentools.genresult(mapped, 104) == '312'
+        assert gentools.sendreturn(mapped, 104) == '312'
 
 
 class TestNest:
@@ -234,7 +234,7 @@ class TestNest:
         assert nested.send(-1) == 'NOT POSITIVE!'
         assert nested.send(-4) == 'NOT POSITIVE!'
         assert nested.send(0) == 7
-        assert gentools.genresult(nested, 102) == 306
+        assert gentools.sendreturn(nested, 102) == 306
 
     def test_any_iterable(self):
         nested = gentools.nest(MyMax(4), try_until_positive)
@@ -245,7 +245,7 @@ class TestNest:
         assert nested.send(-1) == 'NOT POSITIVE!'
         assert nested.send(-4) == 'NOT POSITIVE!'
         assert nested.send(0) == 7
-        assert gentools.genresult(nested, 102) == 306
+        assert gentools.sendreturn(nested, 102) == 306
 
     def test_accumulate(self):
 
@@ -257,7 +257,7 @@ class TestNest:
         assert gen.send(-4) == 'NOT POSITIVE!'
         assert gen.send(3) == 'NOT EVEN!'
         assert gen.send(90) == 90
-        assert gentools.genresult(gen, 110) == 330
+        assert gentools.sendreturn(gen, 110) == 330
 
 
 def test_combined():
@@ -276,7 +276,7 @@ def test_combined():
     assert gen.send(3) == 'NOT EVEN!'
     assert gen.send('5') == 'NOT EVEN!'
     assert gen.send(8.4) == '8'
-    assert gentools.genresult(gen, 104) == 'result: 312'
+    assert gentools.sendreturn(gen, 104) == 'result: 312'
 
 
 def test_oneyield():
@@ -289,7 +289,7 @@ def test_oneyield():
     assert inspect.unwrap(myfunc).__name__ == 'myfunc'
     assert inspect.isgenerator(gen)
     assert next(gen) == 6
-    assert gentools.genresult(gen, 9) == 9
+    assert gentools.sendreturn(gen, 9) == 9
 
 
 def test_nested():
@@ -301,7 +301,7 @@ def test_nested():
     assert gen.send(9) == 'NOT EVEN!'
     assert gen.send(2) == 8
     assert gen.send(-1) == 'NOT POSITIVE!'
-    assert gentools.genresult(gen, 102) == 306
+    assert gentools.sendreturn(gen, 102) == 306
 
 
 def test_yieldmapped():
@@ -312,7 +312,7 @@ def test_yieldmapped():
     assert gen.send(2) == '10'
     assert gen.send(9) == '18'
     assert gen.send(12) == '24'
-    assert gentools.genresult(gen, 103) == 309
+    assert gentools.sendreturn(gen, 103) == 309
 
 
 def test_sendmapped():
@@ -322,7 +322,7 @@ def test_sendmapped():
     assert next(gen) == 5
     assert gen.send(5.3) == 10
     assert gen.send(9) == 18
-    assert gentools.genresult(gen, '103') == 618
+    assert gentools.sendreturn(gen, '103') == 618
 
 
 def test_returnmapped():
@@ -330,7 +330,7 @@ def test_returnmapped():
     gen = decorated(5)
     assert next(gen) == 5
     assert gen.send(9) == 9
-    assert gentools.genresult(gen, 103) == ' 309 '
+    assert gentools.sendreturn(gen, 103) == ' 309 '
 
 
 def test_combining_decorators():
@@ -345,6 +345,6 @@ def test_combining_decorators():
     assert next(gen) == '4'
     assert gen.send('6') == '6'
     assert gen.send('5') == 'NOT EVEN!'
-    assert gentools.genresult(gen, '104') == 'result: 312'
+    assert gentools.sendreturn(gen, '104') == 'result: 312'
 
     assert inspect.unwrap(decorated) is mymax
