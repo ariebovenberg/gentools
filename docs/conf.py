@@ -19,13 +19,9 @@
 #
 import os
 import sys
-import guzzle_sphinx_theme
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import gentools  # noqa
-
-html_theme_path = guzzle_sphinx_theme.html_theme_path()
-html_theme = 'guzzle_sphinx_theme'
 
 # Guzzle theme options (see theme.conf for more information)
 
@@ -42,7 +38,6 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.napoleon',
               'sphinx.ext.todo',
-              'guzzle_sphinx_theme',
               'sphinx_autodoc_typehints',
               'sphinx.ext.viewcode']
 
@@ -96,7 +91,7 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'guzzle_sphinx_theme'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -104,7 +99,6 @@ html_theme = 'guzzle_sphinx_theme'
 #
 html_theme_options = {
     # Set the name of the project to appear in the sidebar
-    "project_nav_name": "gentools",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
