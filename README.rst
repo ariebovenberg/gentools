@@ -66,7 +66,7 @@ Examples
    >>> gen.send(11.3)
    'the current max is: 11'
    >>> gen.send(104)
-   StopIteration(104)
+   StopIteration('final value: 104')
 
 - pipe a generator's yield/send through another generator:
 
