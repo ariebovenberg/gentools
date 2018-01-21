@@ -1,4 +1,5 @@
 import inspect
+from operator import attrgetter
 
 from gentools import utils
 
@@ -17,6 +18,17 @@ class TestCompose:
         assert isinstance(func.funcs, tuple)
         assert func.funcs == ()
         assert inspect.signature(func) == inspect.signature(utils.identity)
+
+    def test_called_as_method(self):
+
+        class Foo:
+            def __init__(self, value):
+                self.value = value
+            func = utils.compose(lambda x: x + 1, attrgetter('value'))
+
+        f = Foo(4)
+        assert Foo.func(f) == 5
+        assert f.func() == 5
 
     def test_one_func_with_multiple_args(self):
         func = utils.compose(int)
