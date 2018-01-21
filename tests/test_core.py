@@ -1,5 +1,6 @@
 import inspect
 import pickle
+import sys
 import types
 from functools import reduce
 
@@ -63,6 +64,8 @@ def mygen(a: int, *, foo):
 
 class TestReusable:
 
+    @pytest.mark.skipif(sys.version_info < (3, 5),
+                        reason='requires python 3.5+')
     def test_picklable(self):
         gen = mygen(4, foo=5)
         assert pickle.loads(pickle.dumps(gen)) == gen
@@ -83,7 +86,7 @@ class TestReusable:
         @mywrapper  # dummy to test combining with other decorators
         def gentype(a: int, b: float, *cs, d, e=5, **fs):
             """my docstring"""
-            return (yield sum([a, b, *cs, d, e, a]))
+            return (yield sum([a, b, sum(cs), d, e, a]))
 
         gentype.__qualname__ = 'mymodule.gentype'
 
