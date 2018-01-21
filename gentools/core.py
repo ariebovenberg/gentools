@@ -9,18 +9,19 @@ from .types import (Generable, GeneratorCallable, ReusableGenerator, T_return,
 from .utils import compose
 
 __all__ = [
+    'reusable',
+    'oneyield',
+
     'imap_yield',
     'imap_send',
     'imap_return',
     'ipipe',
-    'reusable',
 
-    'nested',
-    'yieldmapped',
-    'sendmapped',
-    'returnmapped',
+    'pipe',
+    'map_yield',
+    'map_send',
+    'map_return',
     'sendreturn',
-    'oneyield',
 ]
 
 T_mapped = t.TypeVar('T_mapped')
@@ -57,6 +58,15 @@ def reusable(func: GeneratorCallable[T_yield, T_send, T_return]) -> t.Type[
                                     attrgetter('_bound_args.arguments'))))
             for name in sig.parameters
         ]))
+
+
+class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
+    """decorate a function to turn it into a basic generator"""
+    def __init__(self, func: t.Callable[..., T_yield]):
+        self.__wrapped__ = func
+
+    def __call__(self, *args, **kwargs):
+        return (yield self.__wrapped__(*args, **kwargs))
 
 
 def sendreturn(gen: t.Generator[T_yield, T_send, T_return],
@@ -162,17 +172,14 @@ def ipipe(gen: Generable[T_yield, T_send, T_return],
         item = gen.send(sent)
 
 
-# TODO: docs, types
-class nested:
-    def __init__(self, *genfuncs):
-        self._genfuncs = genfuncs
+class map_yield:
+    """decorate a generator callable to apply function to
+    each ``yield`` value
 
-    def __call__(self, func):
-        return compose(partial(reduce, ipipe, self._genfuncs), func)
-
-
-# TODO: docs, types
-class yieldmapped:
+    See also
+    --------
+    :func:`~gentools.core.imap_yield`
+    """
     def __init__(self, *funcs):
         self._mapper = compose(*funcs)
 
@@ -180,8 +187,14 @@ class yieldmapped:
         return compose(partial(imap_yield, self._mapper), func)
 
 
-# TODO: docs, types
-class sendmapped:
+class map_send:
+    """decorate a generator callable to apply functions to
+    each ``send`` value
+
+    See also
+    --------
+    :func:`~gentools.core.imap_send`
+    """
     def __init__(self, *funcs):
         self._mapper = compose(*funcs)
 
@@ -189,8 +202,14 @@ class sendmapped:
         return compose(partial(imap_send, self._mapper), func)
 
 
-# TODO: docs, types
-class returnmapped:
+class map_return:
+    """decorate a generator callable to apply functions to
+    the ``return`` value
+
+    See also
+    --------
+    :func:`~gentools.core.imap_return`
+    """
     def __init__(self, *funcs):
         self._mapper = compose(*funcs)
 
@@ -198,11 +217,16 @@ class returnmapped:
         return compose(partial(imap_return, self._mapper), func)
 
 
-# TODO: type annotations
-class oneyield:
-    """decorate a function to turn it into a basic generator"""
-    def __init__(self, func: t.Callable):
-        self.__wrapped__ = func
+class pipe:
+    """decorate a generator callable to pipe yield/send values
+    through other generators
 
-    def __call__(self, *args, **kwargs):
-        return (yield self.__wrapped__(*args, **kwargs))
+    See also
+    --------
+    :func:`~gentools.core.ipipe`
+    """
+    def __init__(self, *genfuncs):
+        self._genfuncs = genfuncs
+
+    def __call__(self, func):
+        return compose(partial(reduce, ipipe, self._genfuncs), func)

@@ -124,7 +124,7 @@ class TestReusable:
         assert changed == gentype(4, 9, d=6, foo=10)
 
 
-class TestGenreturn:
+class TestSendReturn:
 
     def test_ok(self):
 
@@ -217,7 +217,7 @@ class TestIMapReturn:
         assert gentools.sendreturn(mapped, 104) == '312'
 
 
-class TestPipe:
+class TestIPipe:
 
     def test_empty(self):
         try:
@@ -260,7 +260,7 @@ class TestPipe:
         assert gentools.sendreturn(gen, 110) == 330
 
 
-def test_combined():
+def test_combine_mappers():
 
     gen = gentools.imap_return(
         'result: {}'.format,
@@ -292,8 +292,8 @@ def test_oneyield():
     assert gentools.sendreturn(gen, 9) == 9
 
 
-def test_nested():
-    decorated = gentools.nested(try_until_even, try_until_positive)(mymax)
+def test_pipe():
+    decorated = gentools.pipe(try_until_even, try_until_positive)(mymax)
 
     gen = decorated(4)
     assert next(gen) == 4
@@ -304,8 +304,8 @@ def test_nested():
     assert gentools.sendreturn(gen, 102) == 306
 
 
-def test_yieldmapped():
-    decorated = gentools.yieldmapped(str, lambda x: x * 2)(mymax)
+def test_map_yield():
+    decorated = gentools.map_yield(str, lambda x: x * 2)(mymax)
 
     gen = decorated(5)
     assert next(gen) == '10'
@@ -315,8 +315,8 @@ def test_yieldmapped():
     assert gentools.sendreturn(gen, 103) == 309
 
 
-def test_sendmapped():
-    decorated = gentools.sendmapped(lambda x: x * 2, int)(mymax)
+def test_map_send():
+    decorated = gentools.map_send(lambda x: x * 2, int)(mymax)
 
     gen = decorated(5)
     assert next(gen) == 5
@@ -325,8 +325,8 @@ def test_sendmapped():
     assert gentools.sendreturn(gen, '103') == 618
 
 
-def test_returnmapped():
-    decorated = gentools.returnmapped(lambda s: s.center(5), str)(mymax)
+def test_map_return():
+    decorated = gentools.map_return(lambda s: s.center(5), str)(mymax)
     gen = decorated(5)
     assert next(gen) == 5
     assert gen.send(9) == 9
@@ -335,10 +335,10 @@ def test_returnmapped():
 
 def test_combining_decorators():
     decorators = compose(
-        gentools.returnmapped('result: {}'.format),
-        gentools.sendmapped(int),
-        gentools.yieldmapped(str),
-        gentools.nested(try_until_even),
+        gentools.map_return('result: {}'.format),
+        gentools.map_send(int),
+        gentools.map_yield(str),
+        gentools.pipe(try_until_even),
     )
     decorated = decorators(mymax)
     gen = decorated(4)
