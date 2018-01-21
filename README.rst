@@ -25,6 +25,73 @@ Gentools
     :alt: Maintainability
 
 
-(work in progress)
-
 like itertools, but for generators
+
+Examples
+--------
+
+- Make generator functions reusable:
+
+.. code-block:: python
+
+   >>> @reusable()
+   ... def countdown(value, step):
+   ...     while value > 0:
+   ...         yield value
+   ...         value -= step
+
+   >>> from_3 = countdown(3, step=1)
+   >>> list(from_3) == [3, 2, 1]
+   True
+   >>> list(from_3) == [3, 2, 1]
+   True
+
+- map a generator's ``yield``, ``send``, and ``return`` values:
+
+.. code-block:: python
+
+   >>> @map_return('final value: {}'.format)
+   ... @map_send(int)
+   ... @map_yield('the current max is: {}'.format)
+   ... def my_max(value):
+   ...     while value < 100:
+   ...         newvalue = yield value
+   ...         if newvalue > value:
+   ...             value = newvalue
+   ...     return value
+
+   >>> gen = my_max(5)
+   >>> next(gen)
+   'the current max is: 5'
+   >>> gen.send(11.3)
+   'the current max is: 11'
+   >>> gen.send(104)
+   StopIteration(104)
+
+- pipe a generator's yield/send through another generator:
+
+.. code-block:: python
+
+   >>> def try_until_positive(value):
+   ...     value = yield value
+   ...     while value < 0:
+   ...         value = yield 'not positive, try again'
+   ...     return newvalue
+
+   >>> @pipe(try_until_positive)
+   ... def my_max(value):
+   ...     while value < 100:
+   ...         newvalue = yield value
+   ...         if newvalue > value:
+   ...             value = newvalue
+   ...     return value
+
+   >>> gen = my_max(5)
+   >>> next(gen)
+   5
+   >>> gen.send(-4)
+   'not positive, try again'
+   >>> gen.send(8)
+   8
+   >>> gen.send(104)
+   StopIteration(104)
