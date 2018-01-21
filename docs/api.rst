@@ -1,6 +1,9 @@
 API reference
 =============
 
+Core
+----
+
 .. automodule:: gentools.core
    :members:
    :special-members:
