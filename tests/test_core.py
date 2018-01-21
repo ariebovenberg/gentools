@@ -150,16 +150,16 @@ class TestGenreturn:
             gentools.sendreturn(gen, 1)
 
 
-class TestYieldMap:
+class TestIMapYield:
 
     def test_empty(self):
         try:
-            next(gentools.yieldmap(str, emptygen()))
+            next(gentools.imap_yield(str, emptygen()))
         except StopIteration as e:
             assert e.value == 99
 
     def test_simple(self):
-        mapped = gentools.yieldmap(str, mymax(4))
+        mapped = gentools.imap_yield(str, mymax(4))
 
         assert next(mapped) == '4'
         assert mapped.send(7) == '7'
@@ -167,16 +167,16 @@ class TestYieldMap:
         assert gentools.sendreturn(mapped, 103) == 309
 
 
-class TestSendMap:
+class TestIMapSend:
 
     def test_empty(self):
         try:
-            next(gentools.sendmap(int, emptygen()))
+            next(gentools.imap_send(int, emptygen()))
         except StopIteration as e:
             assert e.value == 99
 
     def test_simple(self):
-        mapped = gentools.sendmap(int, mymax(4))
+        mapped = gentools.imap_send(int, mymax(4))
 
         assert next(mapped) == 4
         assert mapped.send('7') == 7
@@ -184,7 +184,7 @@ class TestSendMap:
         assert gentools.sendreturn(mapped, '104') == 312
 
     def test_any_iterable(self):
-        mapped = gentools.sendmap(int, MyMax(4))
+        mapped = gentools.imap_send(int, MyMax(4))
 
         assert next(mapped) == 4
         assert mapped.send('7') == 7
@@ -192,16 +192,16 @@ class TestSendMap:
         assert gentools.sendreturn(mapped, '104') == 312
 
 
-class TestReturnMap:
+class TestIMapReturn:
 
     def test_empty(self):
         try:
-            next(gentools.returnmap(str, emptygen()))
+            next(gentools.imap_return(str, emptygen()))
         except StopIteration as e:
             assert e.value == '99'
 
     def test_simple(self):
-        mapped = gentools.returnmap(str, mymax(4))
+        mapped = gentools.imap_return(str, mymax(4))
 
         assert next(mapped) == 4
         assert mapped.send(7) == 7
@@ -209,7 +209,7 @@ class TestReturnMap:
         assert gentools.sendreturn(mapped, 104) == '312'
 
     def test_any_iterable(self):
-        mapped = gentools.returnmap(str, MyMax(4))
+        mapped = gentools.imap_return(str, MyMax(4))
 
         assert next(mapped) == 4
         assert mapped.send(7) == 7
@@ -262,11 +262,11 @@ class TestNest:
 
 def test_combined():
 
-    gen = gentools.returnmap(
+    gen = gentools.imap_return(
         'result: {}'.format,
-        gentools.sendmap(
+        gentools.imap_send(
             int,
-            gentools.yieldmap(
+            gentools.imap_yield(
                 str,
                 gentools.nest(
                     mymax(4),

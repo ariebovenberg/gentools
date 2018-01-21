@@ -3,11 +3,10 @@ import abc
 import inspect
 import sys
 import typing as t
+from collections import OrderedDict
 from copy import copy
 from itertools import starmap
-from collections import OrderedDict
 from types import GeneratorType
-
 
 __all__ = [
     'Generable',

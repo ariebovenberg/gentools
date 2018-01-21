@@ -4,15 +4,15 @@ import typing as t
 from functools import partial, reduce
 from operator import attrgetter, itemgetter
 
-from .types import (GeneratorCallable, ReusableGenerator,
-                    T_yield, T_send, T_return)
+from .types import (Generable, GeneratorCallable, ReusableGenerator, T_return,
+                    T_send, T_yield)
 from .utils import compose
 
 __all__ = [
     'nest',
-    'yieldmap',
-    'sendmap',
-    'returnmap',
+    'imap_yield',
+    'imap_send',
+    'imap_return',
     'nested',
     'yieldmapped',
     'sendmapped',
@@ -21,6 +21,8 @@ __all__ = [
     'sendreturn',
     'oneyield',
 ]
+
+T_mapped = t.TypeVar('T_mapped')
 
 
 def reusable(func: GeneratorCallable[T_yield, T_send, T_return]) -> t.Type[
@@ -78,7 +80,18 @@ def sendreturn(gen: t.Generator[T_yield, T_send, T_return],
         raise RuntimeError('generator did not return as expected')
 
 
-def yieldmap(func, gen) -> t.Generator:
+def imap_yield(func: t.Callable[[T_yield], T_mapped],
+               gen: Generable[T_yield, T_send, T_return]) -> (
+                   t.Generator[T_mapped, T_send, T_return]):
+    """apply a function to all ``yield`` values of a generator
+
+    Parameters
+    ----------
+    func
+        the function to apply
+    gen
+        the generator iterable.
+    """
     gen = iter(gen)
     assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
     item = next(gen)
@@ -86,13 +99,30 @@ def yieldmap(func, gen) -> t.Generator:
         item = gen.send((yield func(item)))
 
 
-# TODO: type annotations, docstring
-def sendmap(func, gen) -> t.Generator:
+def imap_send(func: t.Callable[[T_send], T_mapped],
+              gen: Generable[T_yield, T_mapped, T_return]) -> (
+                  t.Generator[T_yield, T_send, T_return]):
+    """apply a function to all ``send`` values of a generator
+
+    Parameters
+    ----------
+    func
+        the function to apply
+    gen
+        the generator iterable.
+    """
     gen = iter(gen)
     assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
     item = next(gen)
     while True:
         item = gen.send(func((yield item)))
+
+
+# TODO: type annotations, docstring
+def imap_return(func, gen):
+    gen = iter(gen)
+    assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
+    return func((yield from gen))
 
 
 # TODO: type annotations, docstring
@@ -103,13 +133,6 @@ def nest(gen, pipe):
     while True:
         sent = yield from pipe(item)
         item = gen.send(sent)
-
-
-# TODO: type annotations, docstring
-def returnmap(func, gen):
-    gen = iter(gen)
-    assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
-    return func((yield from gen))
 
 
 # TODO: docs, types
@@ -127,7 +150,7 @@ class yieldmapped:
         self._mapper = compose(*funcs)
 
     def __call__(self, func):
-        return compose(partial(yieldmap, self._mapper), func)
+        return compose(partial(imap_yield, self._mapper), func)
 
 
 # TODO: docs, types
@@ -136,7 +159,7 @@ class sendmapped:
         self._mapper = compose(*funcs)
 
     def __call__(self, func):
-        return compose(partial(sendmap, self._mapper), func)
+        return compose(partial(imap_send, self._mapper), func)
 
 
 # TODO: docs, types
@@ -145,7 +168,7 @@ class returnmapped:
         self._mapper = compose(*funcs)
 
     def __call__(self, func):
-        return compose(partial(returnmap, self._mapper), func)
+        return compose(partial(imap_return, self._mapper), func)
 
 
 # TODO: type annotations
