@@ -112,7 +112,7 @@ class TestReusable:
         assert hash(gen) == hash(othergen)
 
         assert repr(gen) == ("mymodule.gentype("
-                            "a=4, b=5, cs=(), d=6, e=5, fs={'foo': 10})")
+                             "a=4, b=5, cs=(), d=6, e=5, fs={'foo': 10})")
 
         assert not gen == gentype(3, 4, 5, d=10)
         assert gen != gentype(1, 2, d=7)
