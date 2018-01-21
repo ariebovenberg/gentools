@@ -217,39 +217,39 @@ class TestIMapReturn:
         assert gentools.sendreturn(mapped, 104) == '312'
 
 
-class TestNest:
+class TestPipe:
 
     def test_empty(self):
         try:
-            next(gentools.nest(emptygen(), try_until_positive))
+            next(gentools.pipe(emptygen(), try_until_positive))
         except StopIteration as e:
             assert e.value == 99
 
     def test_simple(self):
-        nested = gentools.nest(mymax(4), try_until_positive)
+        piped = gentools.pipe(mymax(4), try_until_positive)
 
-        assert next(nested) == 4
-        assert nested.send(7) == 7
-        assert nested.send(6) == 7
-        assert nested.send(-1) == 'NOT POSITIVE!'
-        assert nested.send(-4) == 'NOT POSITIVE!'
-        assert nested.send(0) == 7
-        assert gentools.sendreturn(nested, 102) == 306
+        assert next(piped) == 4
+        assert piped.send(7) == 7
+        assert piped.send(6) == 7
+        assert piped.send(-1) == 'NOT POSITIVE!'
+        assert piped.send(-4) == 'NOT POSITIVE!'
+        assert piped.send(0) == 7
+        assert gentools.sendreturn(piped, 102) == 306
 
     def test_any_iterable(self):
-        nested = gentools.nest(MyMax(4), try_until_positive)
+        piped = gentools.pipe(MyMax(4), try_until_positive)
 
-        assert next(nested) == 4
-        assert nested.send(7) == 7
-        assert nested.send(6) == 7
-        assert nested.send(-1) == 'NOT POSITIVE!'
-        assert nested.send(-4) == 'NOT POSITIVE!'
-        assert nested.send(0) == 7
-        assert gentools.sendreturn(nested, 102) == 306
+        assert next(piped) == 4
+        assert piped.send(7) == 7
+        assert piped.send(6) == 7
+        assert piped.send(-1) == 'NOT POSITIVE!'
+        assert piped.send(-4) == 'NOT POSITIVE!'
+        assert piped.send(0) == 7
+        assert gentools.sendreturn(piped, 102) == 306
 
     def test_accumulate(self):
 
-        gen = reduce(gentools.nest,
+        gen = reduce(gentools.pipe,
                      [try_until_even, try_until_positive],
                      mymax(4))
 
@@ -268,7 +268,7 @@ def test_combined():
             int,
             gentools.imap_yield(
                 str,
-                gentools.nest(
+                gentools.pipe(
                     mymax(4),
                     try_until_even))))
 

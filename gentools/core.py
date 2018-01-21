@@ -9,15 +9,15 @@ from .types import (Generable, GeneratorCallable, ReusableGenerator, T_return,
 from .utils import compose
 
 __all__ = [
-    'nest',
     'imap_yield',
     'imap_send',
     'imap_return',
+    'reusable',
+    'pipe',
     'nested',
     'yieldmapped',
     'sendmapped',
     'returnmapped',
-    'reusable',
     'sendreturn',
     'oneyield',
 ]
@@ -118,20 +118,30 @@ def imap_send(func: t.Callable[[T_send], T_mapped],
         item = gen.send(func((yield item)))
 
 
-# TODO: type annotations, docstring
-def imap_return(func, gen):
+def imap_return(func: t.Callable[[T_return], T_mapped],
+                gen: Generable[T_yield, T_send, T_return]) -> (
+                    t.Generator[T_yield, T_send, T_mapped]):
+    """apply a function to the ``return`` value of a generator
+
+    Parameters
+    ----------
+    func
+        the function to apply
+    gen
+        the generator iterable.
+    """
     gen = iter(gen)
     assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
     return func((yield from gen))
 
 
 # TODO: type annotations, docstring
-def nest(gen, pipe):
+def pipe(gen, thru):
     gen = iter(gen)
     assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
     item = next(gen)
     while True:
-        sent = yield from pipe(item)
+        sent = yield from thru(item)
         item = gen.send(sent)
 
 
@@ -141,7 +151,7 @@ class nested:
         self._genfuncs = genfuncs
 
     def __call__(self, func):
-        return compose(partial(reduce, nest, self._genfuncs), func)
+        return compose(partial(reduce, pipe, self._genfuncs), func)
 
 
 # TODO: docs, types
