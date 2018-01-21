@@ -72,11 +72,11 @@ Examples
 
 .. code-block:: python
 
-   >>> def try_until_positive(value):
-   ...     value = yield value
+   >>> def try_until_positive(outvalue):
+   ...     value = yield outvalue
    ...     while value < 0:
    ...         value = yield 'not positive, try again'
-   ...     return newvalue
+   ...     return value
 
    >>> @pipe(try_until_positive)
    ... def my_max(value):
