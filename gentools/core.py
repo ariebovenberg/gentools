@@ -1,4 +1,3 @@
-"""itertools for generators with send() and throw()"""
 import inspect
 import typing as t
 from functools import partial, reduce
@@ -40,7 +39,10 @@ def reusable(func: GeneratorCallable[T_yield, T_send, T_return]) -> t.Type[
 
     Note
     ----
-    the callable must have an inspectable signature
+    * the callable must have an inspectable signature
+    * If bound to a class, the new reusable generator is callable as a method.
+      To opt out of this, add a :func:`staticmethod` decorator above.
+
     """
     sig = inspect.signature(func)
     origin = inspect.unwrap(func)

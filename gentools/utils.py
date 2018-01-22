@@ -7,7 +7,13 @@ def identity(obj):
     return obj
 
 
-class compose:
+class CallableAsMethod:
+    """mixin for callables to be callable as methods when bound to a class"""
+    def __get__(self, obj, objtype=None):
+        return self if obj is None else MethodType(self, obj)
+
+
+class compose(CallableAsMethod):
     """compose a function from a chain of functions
 
     Parameters
@@ -44,8 +50,3 @@ class compose:
         for func in reversed(tail):
             value = func(value)
         return value
-
-    # make composed functions callable as methods,
-    # when bound to a class
-    def __get__(self, obj, objtype=None):
-        return self if obj is None else MethodType(self, obj)

@@ -41,10 +41,10 @@ Examples
    ...         value -= step
 
    >>> from_3 = countdown(3, step=1)
-   >>> list(from_3) == [3, 2, 1]
-   True
-   >>> list(from_3) == [3, 2, 1]
-   True
+   >>> list(from_3)
+   [3, 2, 1]
+   >>> list(from_3)
+   [3, 2, 1]
 
 - map a generator's ``yield``, ``send``, and ``return`` values:
 

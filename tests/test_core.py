@@ -70,6 +70,34 @@ class TestReusable:
         gen = mygen(4, foo=5)
         assert pickle.loads(pickle.dumps(gen)) == gen
 
+    def test_callable_as_method(self):
+
+        class Parent:
+            def __init__(self, foo):
+                self.foo = foo
+
+            @gentools.reusable
+            def mygen(self, value):
+                yield self.foo
+                yield value
+
+            # opt out with staticmethod
+            @staticmethod
+            @gentools.reusable
+            def staticgen(foo, bar):
+                yield foo
+                yield bar
+
+        p = Parent(4)
+
+        assert list(Parent.mygen(p, 8)) == [4, 8]
+        gen = p.mygen(9)
+        assert list(gen) == list(gen) == [4, 9]
+        assert p.mygen.__self__ is p
+
+        assert list(Parent.staticgen(3, 9)) == [3, 9]
+        assert list(p.staticgen(3, 9)) == [3, 9]
+
     def test_example(self):
 
         class mywrapper:
@@ -105,6 +133,7 @@ class TestReusable:
         assert gen.fs == {'foo': 10}
 
         assert next(iter(gen)) == '24'
+        assert next(iter(gen)) == '24'  # reusable
 
         othergen = gentype(4, b=5, d=6, e=5, foo=10)
         assert gen == othergen
