@@ -8,6 +8,8 @@ from copy import copy
 from itertools import starmap
 from types import GeneratorType
 
+from .utils import CallableAsMethod
+
 __all__ = [
     'Generable',
     'GeneratorCallable',
@@ -68,8 +70,18 @@ class GeneratorCallable(t.Generic[T_yield, T_send, T_return]):
         raise NotImplementedError()
 
 
-class ReusableGenerator(Generable[T_yield, T_send, T_return]):
+class ReusableGeneratorMeta(CallableAsMethod, t.GenericMeta):
+    pass
+
+
+class ReusableGenerator(Generable[T_yield, T_send, T_return],
+                        metaclass=ReusableGeneratorMeta):
     """base class for reusable generator functions
+
+    Note
+    ----
+    If bound to a class, the new reusable generator is callable as a method.
+    To opt out of this, use the :class:`staticmethod` decorator
 
     Warning
     -------
