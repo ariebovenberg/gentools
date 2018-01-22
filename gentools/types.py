@@ -78,11 +78,6 @@ class ReusableGenerator(Generable[T_yield, T_send, T_return],
                         metaclass=ReusableGeneratorMeta):
     """base class for reusable generator functions
 
-    Note
-    ----
-    If bound to a class, the new reusable generator is callable as a method.
-    To opt out of this, use the :class:`staticmethod` decorator
-
     Warning
     -------
     * Do not subclass directly.
@@ -115,7 +110,14 @@ class ReusableGenerator(Generable[T_yield, T_send, T_return],
         return hash((self._bound_args.args,
                      tuple(self._bound_args.kwargs.items())))
 
-    def replace(self, **kwargs):
+    def replace(self, **kwargs) -> 'ReusableGenerator':
+        """create a new instance with certain fields replaced
+
+        Parameters
+        ----------
+        **kwargs
+            fields to replace
+        """
         copied = copy(self._bound_args)
         copied.arguments.update(**kwargs)
         return self.__class__(*copied.args, **copied.kwargs)
