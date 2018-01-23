@@ -92,7 +92,6 @@ html_theme_options = {
     'github_repo': 'gentools',
     'github_banner': True,
     'github_type': 'star',
-    'code_font_size': '0.8em',
     'warn_bg': '#FFC',
     'warn_border': '#EEE',
 }
