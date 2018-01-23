@@ -25,7 +25,14 @@ Gentools
     :alt: Maintainability
 
 
-like itertools, for generators, generator functions, and generator-based coroutines.
+Tools for generators, generator functions, and generator-based coroutines.
+
+Installation
+------------
+
+.. code-block:: bash
+
+   pip install gentools
 
 Examples
 --------
@@ -45,6 +52,12 @@ Examples
    [3, 2, 1]
    >>> list(from_3)
    [3, 2, 1]
+   >>> isinstance(from_3, countdown)
+   True
+   >>> from_3.step  # attribute access to arguments
+   1
+   >>> from_3.replace(value=5)  # create copies with replaced fields
+   countdown(value=5, step=1)
 
 - map a generator's ``yield``, ``send``, and ``return`` values:
 

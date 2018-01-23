@@ -4,6 +4,11 @@ Release history
 development
 +++++++++++
 
+0.3.1 (2018-01-23)
+++++++++++++++++++
+
+- fix copy issue in reusable generator ``.replace()``
+
 0.3.0 (2018-01-22)
 ++++++++++++++++++
 
