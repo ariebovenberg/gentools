@@ -25,7 +25,14 @@ Gentools
     :alt: Maintainability
 
 
-like itertools, for generators, generator functions, and generator-based coroutines.
+Tools for generators, generator functions, and generator-based coroutines.
+
+Installation
+------------
+
+.. code-block:: bash
+
+   pip install gentools
 
 Examples
 --------
