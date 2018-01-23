@@ -4,7 +4,6 @@ import inspect
 import sys
 import typing as t
 from collections import OrderedDict
-from copy import copy
 from itertools import starmap
 from types import GeneratorType
 
@@ -118,6 +117,7 @@ class ReusableGenerator(Generable[T_yield, T_send, T_return],
         **kwargs
             fields to replace
         """
-        copied = copy(self._bound_args)
+        copied = self.__signature__.bind(*self._bound_args.args,
+                                         **self._bound_args.kwargs)
         copied.arguments.update(**kwargs)
         return self.__class__(*copied.args, **copied.kwargs)

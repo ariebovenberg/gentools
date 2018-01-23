@@ -150,7 +150,9 @@ class TestReusable:
         assert gen != object()
 
         changed = gen.replace(b=9)
+        assert gen == gentype(4, 5, d=6, e=5, foo=10)
         assert changed == gentype(4, 9, d=6, foo=10)
+        assert changed.b == 9
 
 
 class TestSendReturn:
