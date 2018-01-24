@@ -69,7 +69,7 @@ class GeneratorCallable(t.Generic[T_yield, T_send, T_return]):
         raise NotImplementedError()
 
 
-class ReusableGeneratorMeta(CallableAsMethod, t.GenericMeta):
+class ReusableGeneratorMeta(CallableAsMethod, type(Generable)):
     pass
 
 
