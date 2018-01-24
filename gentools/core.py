@@ -14,9 +14,9 @@ __all__ = [
     'imap_yield',
     'imap_send',
     'imap_return',
-    'ipipe',
+    'irelay',
 
-    'pipe',
+    'relay',
     'map_yield',
     'map_send',
     'map_return',
@@ -150,14 +150,15 @@ def imap_return(func: t.Callable[[T_return], T_mapped],
     return func((yield from gen))
 
 
-_Pipe = t.Callable[[T_yield], t.Generator[T_yield_new,
-                                          T_send_new,
-                                          T_send]]
+_Relay = t.Callable[[T_yield], t.Generator[T_yield_new,
+                                           T_send_new,
+                                           T_send]]
 
 
-def ipipe(gen: Generable[T_yield, T_send, T_return],
-          thru: _Pipe) -> t.Generator[T_yield_new, T_send_new, T_return]:
-    """create a new generator by piping yield/send through another generator
+def irelay(gen: Generable[T_yield, T_send, T_return],
+           thru: _Relay) -> t.Generator[T_yield_new, T_send_new, T_return]:
+    """create a new generator by relaying yield/send interactions
+    through another generator
 
     Parameters
     ----------
@@ -219,16 +220,16 @@ class map_return:
         return compose(partial(imap_return, self._mapper), func)
 
 
-class pipe:
-    """decorate a generator callable to pipe yield/send values
+class relay:
+    """decorate a generator callable to relay yield/send values
     through other generators
 
     See also
     --------
-    :func:`~gentools.core.ipipe`
+    :func:`~gentools.core.irelay`
     """
     def __init__(self, *genfuncs):
         self._genfuncs = genfuncs
 
     def __call__(self, func):
-        return compose(partial(reduce, ipipe, self._genfuncs), func)
+        return compose(partial(reduce, irelay, self._genfuncs), func)

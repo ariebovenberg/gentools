@@ -11,7 +11,7 @@ from gentools.utils import compose
 
 
 def try_until_positive(req):
-    """an example Pipe"""
+    """an example relay"""
     response = yield req
     while response < 0:
         response = yield 'NOT POSITIVE!'
@@ -19,7 +19,7 @@ def try_until_positive(req):
 
 
 def try_until_even(req):
-    """an example Pipe"""
+    """an example relay"""
     response = yield req
     while response % 2:
         response = yield 'NOT EVEN!'
@@ -248,39 +248,39 @@ class TestIMapReturn:
         assert gentools.sendreturn(mapped, 104) == '312'
 
 
-class TestIPipe:
+class TestIRelay:
 
     def test_empty(self):
         try:
-            next(gentools.ipipe(emptygen(), try_until_positive))
+            next(gentools.irelay(emptygen(), try_until_positive))
         except StopIteration as e:
             assert e.value == 99
 
     def test_simple(self):
-        piped = gentools.ipipe(mymax(4), try_until_positive)
+        relayed = gentools.irelay(mymax(4), try_until_positive)
 
-        assert next(piped) == 4
-        assert piped.send(7) == 7
-        assert piped.send(6) == 7
-        assert piped.send(-1) == 'NOT POSITIVE!'
-        assert piped.send(-4) == 'NOT POSITIVE!'
-        assert piped.send(0) == 7
-        assert gentools.sendreturn(piped, 102) == 306
+        assert next(relayed) == 4
+        assert relayed.send(7) == 7
+        assert relayed.send(6) == 7
+        assert relayed.send(-1) == 'NOT POSITIVE!'
+        assert relayed.send(-4) == 'NOT POSITIVE!'
+        assert relayed.send(0) == 7
+        assert gentools.sendreturn(relayed, 102) == 306
 
     def test_any_iterable(self):
-        piped = gentools.ipipe(MyMax(4), try_until_positive)
+        relayed = gentools.irelay(MyMax(4), try_until_positive)
 
-        assert next(piped) == 4
-        assert piped.send(7) == 7
-        assert piped.send(6) == 7
-        assert piped.send(-1) == 'NOT POSITIVE!'
-        assert piped.send(-4) == 'NOT POSITIVE!'
-        assert piped.send(0) == 7
-        assert gentools.sendreturn(piped, 102) == 306
+        assert next(relayed) == 4
+        assert relayed.send(7) == 7
+        assert relayed.send(6) == 7
+        assert relayed.send(-1) == 'NOT POSITIVE!'
+        assert relayed.send(-4) == 'NOT POSITIVE!'
+        assert relayed.send(0) == 7
+        assert gentools.sendreturn(relayed, 102) == 306
 
     def test_accumulate(self):
 
-        gen = reduce(gentools.ipipe,
+        gen = reduce(gentools.irelay,
                      [try_until_even, try_until_positive],
                      mymax(4))
 
@@ -299,7 +299,7 @@ def test_combine_mappers():
             int,
             gentools.imap_yield(
                 str,
-                gentools.ipipe(
+                gentools.irelay(
                     mymax(4),
                     try_until_even))))
 
@@ -323,8 +323,8 @@ def test_oneyield():
     assert gentools.sendreturn(gen, 9) == 9
 
 
-def test_pipe():
-    decorated = gentools.pipe(try_until_even, try_until_positive)(mymax)
+def test_relay():
+    decorated = gentools.relay(try_until_even, try_until_positive)(mymax)
 
     gen = decorated(4)
     assert next(gen) == 4
@@ -369,7 +369,7 @@ def test_combining_decorators():
         gentools.map_return('result: {}'.format),
         gentools.map_send(int),
         gentools.map_yield(str),
-        gentools.pipe(try_until_even),
+        gentools.relay(try_until_even),
     )
     decorated = decorators(mymax)
     gen = decorated(4)

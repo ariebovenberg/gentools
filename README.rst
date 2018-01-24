@@ -52,12 +52,12 @@ Examples
    [3, 2, 1]
    >>> list(from_3)
    [3, 2, 1]
-   >>> isinstance(from_3, countdown)
+   >>> isinstance(from_3, countdown)  # generator func is wrapped in a class
    True
    >>> from_3.step  # attribute access to arguments
    1
-   >>> from_3.replace(value=5)  # create copies with replaced fields
-   countdown(value=5, step=1)
+   >>> from_3.replace(value=5)  # create new instance with replaced fields
+   countdown(value=5, step=1)  # descriptive repr()
 
 - map a generator's ``yield``, ``send``, and ``return`` values:
 
@@ -81,7 +81,7 @@ Examples
    >>> gen.send(104)
    StopIteration('final value: 104')
 
-- pipe a generator's yield/send through another generator:
+- relay a generator's yield/send interactions through another generator:
 
 .. code-block:: python
 
@@ -91,7 +91,7 @@ Examples
    ...         value = yield 'not positive, try again'
    ...     return value
 
-   >>> @pipe(try_until_positive)
+   >>> @relay(try_until_positive)
    ... def my_max(value):
    ...     while value < 100:
    ...         newvalue = yield value
@@ -103,6 +103,8 @@ Examples
    >>> next(gen)
    5
    >>> gen.send(-4)
+   'not positive, try again'
+   >>> gen.send(-1)
    'not positive, try again'
    >>> gen.send(8)
    8
