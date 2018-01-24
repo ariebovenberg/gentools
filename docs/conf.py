@@ -94,6 +94,7 @@ html_theme_options = {
     'github_type': 'star',
     'warn_bg': '#FFC',
     'warn_border': '#EEE',
+    'code_font_size': '0.8em',
 }
 
 
