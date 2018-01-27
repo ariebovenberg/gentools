@@ -4,7 +4,7 @@ Release history
 development
 +++++++++++
 
-0.4.1 (2018-01-27)
+1.0.0 (2018-01-27)
 ++++++++++++++++++
 
 - Include ``compose`` in public API
