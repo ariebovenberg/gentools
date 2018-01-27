@@ -21,6 +21,8 @@ __all__ = [
     'map_send',
     'map_return',
     'sendreturn',
+
+    'compose',
 ]
 
 T_mapped = t.TypeVar('T_mapped')

@@ -23,7 +23,7 @@ class compose(CallableAsMethod):
 
     Note
     ----
-    * if given no functions, acts as :func:`identity`
+    * if given no functions, acts as an identity function
     """
     def __init__(self, *funcs: t.Callable):
         self.funcs = funcs
