@@ -4,6 +4,11 @@ Release history
 development
 +++++++++++
 
+1.0.1 (2018-01-27)
+++++++++++++++++++
+
+- update dev status classifier
+
 1.0.0 (2018-01-27)
 ++++++++++++++++++
 
