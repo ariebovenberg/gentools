@@ -11,6 +11,10 @@ def test_identity():
 
 class TestCompose:
 
+    def test_part_of_main_api(self):
+        from gentools import compose
+        assert compose is utils.compose
+
     def test_empty(self):
         obj = object()
         func = utils.compose()
