@@ -1,4 +1,4 @@
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 __author__ = 'Arie Bovenberg'
 __copyright__ = '2017, Arie Bovenberg'
 __description__ = ('tools for generators, generator functions, '
