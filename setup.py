@@ -41,6 +41,6 @@ setup(
         'typing>=3.6.2;python_version<"3.5"'
     ],
     keywords=['generators', 'itertools'],
-    python_requires='>=3.4',
+    python_requires='>=2.7',
     packages=find_packages(exclude=('tests', 'docs'))
 )

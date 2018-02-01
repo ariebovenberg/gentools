@@ -1,16 +1,15 @@
 """Miscellaneous tools, boilerplate, and shortcuts"""
-import typing as t
-from types import MethodType
+from functools import partial
 
 
 def identity(obj):
     return obj
 
 
-class CallableAsMethod:
+class CallableAsMethod(object):
     """mixin for callables to be callable as methods when bound to a class"""
     def __get__(self, obj, objtype=None):
-        return self if obj is None else MethodType(self, obj)
+        return self if obj is None else partial(self, obj)
 
 
 class compose(CallableAsMethod):
@@ -25,7 +24,7 @@ class compose(CallableAsMethod):
     ----
     * if given no functions, acts as an identity function
     """
-    def __init__(self, *funcs: t.Callable):
+    def __init__(self, *funcs):
         self.funcs = funcs
         self.__wrapped__ = funcs[-1] if funcs else identity
 
@@ -45,7 +44,7 @@ class compose(CallableAsMethod):
     def __call__(self, *args, **kwargs):
         if not self.funcs:
             return identity(*args, **kwargs)
-        *tail, head = self.funcs
+        tail, head = self.funcs[:-1], self.funcs[-1]
         value = head(*args, **kwargs)
         for func in reversed(tail):
             value = func(value)

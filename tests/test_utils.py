@@ -1,7 +1,11 @@
-import inspect
 from operator import attrgetter
 
 from gentools import utils
+
+try:
+    from inspect import signature
+except ImportError:
+    from funcsigs import signature
 
 
 def test_identity():
@@ -21,11 +25,11 @@ class TestCompose:
         assert func(obj) is obj
         assert isinstance(func.funcs, tuple)
         assert func.funcs == ()
-        assert inspect.signature(func) == inspect.signature(utils.identity)
+        assert signature(func) == signature(utils.identity)
 
     def test_called_as_method(self):
 
-        class Foo:
+        class Foo(object):
             def __init__(self, value):
                 self.value = value
             func = utils.compose(lambda x: x + 1, attrgetter('value'))

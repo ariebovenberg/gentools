@@ -1,11 +1,11 @@
 """base classes and interfaces"""
+import sys
 import abc
 import inspect
 import sys
 import typing as t
 from collections import OrderedDict
 from itertools import starmap
-from types import GeneratorType
 
 from .utils import CallableAsMethod
 
@@ -19,6 +19,13 @@ T_yield = t.TypeVar('T_yield')
 T_send = t.TypeVar('T_send')
 T_return = t.TypeVar('T_return')
 
+PY2 = sys.version_info < (3, )
+
+try:
+    from inspect import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
+except ImportError:
+    from funcsigs import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
+
 
 # copied from BoundArguments.apply_defaults from python3.5
 if sys.version_info < (3, 5):  # pragma: no cover
@@ -29,11 +36,11 @@ if sys.version_info < (3, 5):  # pragma: no cover
             try:
                 new_arguments.append((name, arguments[name]))
             except KeyError:
-                if param.default is not inspect._empty:
+                if param.default is not _empty:
                     val = param.default
-                elif param.kind is inspect._VAR_POSITIONAL:
+                elif param.kind is _VAR_POSITIONAL:
                     val = ()
-                elif param.kind is inspect._VAR_KEYWORD:
+                elif param.kind is _VAR_KEYWORD:
                     val = {}
                 else:
                     # This BoundArguments was likely produced by
@@ -52,20 +59,27 @@ class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
     """
 
     @abc.abstractmethod
-    def __iter__(self) -> t.Generator[T_yield, T_send, T_return]:
-        """a generator which resolves the query"""
+    def __iter__(self):
+        """a generator which resolves the query
+        -> t.Generator[T_yield, T_send, T_return]
+        """
         raise NotImplementedError()
 
 
-Generable.register(GeneratorType)
+try:
+    from types import GeneratorType
+except ImportError:
+    pass
+else:
+    Generable.register(GeneratorType)
 
 
 class GeneratorCallable(t.Generic[T_yield, T_send, T_return]):
     """ABC for callables which return a generator.
     Note that :term:`generator functions <generator>` already implement this.
     """
-    def __call__(self, *args, **kwargs) -> t.Generator[
-            T_yield, T_send, T_return]:
+    def __call__(self, *args, **kwargs):
+        """ -> t.Generator[T_yield, T_send, T_return]"""
         raise NotImplementedError()
 
 
@@ -73,8 +87,25 @@ class ReusableGeneratorMeta(CallableAsMethod, type(Generable)):
     pass
 
 
-class ReusableGenerator(Generable[T_yield, T_send, T_return],
-                        metaclass=ReusableGeneratorMeta):
+def with_metaclass(meta, *bases):
+    """Create a base class with a metaclass."""
+    # This requires a bit of explanation: the basic idea is to make a dummy
+    # metaclass for one level of class instantiation that replaces itself with
+    # the actual metaclass.
+    class metaclass(type):
+
+        def __new__(cls, name, this_bases, d):
+            return meta(name, bases, d)
+
+        @classmethod
+        def __prepare__(cls, name, this_bases):
+            return meta.__prepare__(name, bases)
+    return type.__new__(metaclass, 'temporary_class', (), {})
+
+
+class ReusableGenerator(
+        with_metaclass(ReusableGeneratorMeta,
+                       Generable[T_yield, T_send, T_return])):
     """base class for reusable generator functions
 
     Warning
@@ -109,13 +140,17 @@ class ReusableGenerator(Generable[T_yield, T_send, T_return],
         return hash((self._bound_args.args,
                      tuple(self._bound_args.kwargs.items())))
 
-    def replace(self, **kwargs) -> 'ReusableGenerator':
+    def replace(self, **kwargs):
         """create a new instance with certain fields replaced
 
         Parameters
         ----------
         **kwargs
             fields to replace
+
+        Returns
+        -------
+        ReusableGenerator
         """
         copied = self.__signature__.bind(*self._bound_args.args,
                                          **self._bound_args.kwargs)
