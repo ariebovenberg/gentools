@@ -1,17 +1,20 @@
 import sys
-import inspect
 import typing as t
 from functools import partial, reduce
 from operator import attrgetter, itemgetter
 
-from .types import (Generable, GeneratorCallable, ReusableGenerator, T_return,
-                    T_send, T_yield)
+from .types import GeneratorCallable, ReusableGenerator, T_send, T_yield
 from .utils import compose
 
 try:
     from inspect import signature
-except ImportError:
+except ImportError:  # pragma: no cover
     from funcsigs import signature
+
+
+def _started(gen):
+    return gen.gi_frame.f_lasti == -1
+
 
 __all__ = [
     'reusable',
@@ -127,7 +130,7 @@ def imap_yield(func, gen):
     t.Generator[T_mapped, T_send, T_return]
     """
     gen = iter(gen)
-    # assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
+    assert _started(gen)
     item = next(gen)
     while True:
         item = gen.send((yield func(item)))
@@ -148,7 +151,7 @@ def imap_send(func, gen):
     t.Generator[T_yield, T_send, T_return]
     """
     gen = iter(gen)
-    # assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
+    assert _started(gen)
     item = next(gen)
     while True:
         item = gen.send(func((yield item)))
@@ -169,7 +172,7 @@ def imap_return(func, gen):
     t.Generator[T_yield, T_send, T_mapped]
     """
     gen = iter(gen)
-    # assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
+    assert _started(gen)
     # this is basically:
     #     return func((yield from gen))
     # but without yield from
@@ -206,7 +209,7 @@ def irelay(gen, thru):
     t.Generator[T_yield_new, T_send_new, T_return]
     """
     gen = iter(gen)
-    # assert inspect.getgeneratorstate(gen) == 'GEN_CREATED'
+    assert _started(gen)
     item = next(gen)
     while True:
         # the following is basically:
@@ -215,9 +218,9 @@ def irelay(gen, thru):
         _i = iter(thru(item))
         try:
             _y = next(_i)
-        except StopIteration as _e:
+        except StopIteration as _e:  # pragma: no cover
             _r = _e.args[0]
-        else:
+        else:  # pragma: no cover
             while 1:
                 try:
                     _s = yield _y

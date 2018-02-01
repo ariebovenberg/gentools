@@ -1,5 +1,4 @@
 """base classes and interfaces"""
-import sys
 import abc
 import inspect
 import sys
@@ -19,11 +18,9 @@ T_yield = t.TypeVar('T_yield')
 T_send = t.TypeVar('T_send')
 T_return = t.TypeVar('T_return')
 
-PY2 = sys.version_info < (3, )
-
 try:
     from inspect import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
-except ImportError:
+except ImportError:  # pragma: no cover
     from funcsigs import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
 
 
@@ -68,7 +65,7 @@ class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
 
 try:
     from types import GeneratorType
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 else:
     Generable.register(GeneratorType)

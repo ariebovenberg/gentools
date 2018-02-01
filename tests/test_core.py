@@ -7,8 +7,8 @@ from functools import reduce
 import pytest
 
 import gentools
-from gentools.utils import compose
 from gentools import return_
+from gentools.utils import compose
 
 try:
     from inspect import signature
@@ -72,6 +72,12 @@ def emptygen():
 def mygen(a, foo):
     yield a
     yield foo
+
+
+def test_return():
+    with pytest.raises(StopIteration) as exc:
+        gentools.return_('foo')
+    assert exc.value.args[0] == 'foo'
 
 
 class TestReusable:
