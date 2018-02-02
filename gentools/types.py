@@ -64,8 +64,12 @@ class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
 
     @abc.abstractmethod
     def __iter__(self):
-        """a generator which resolves the query
-        -> t.Generator[T_yield, T_send, T_return]
+        """
+
+        Returns
+        -------
+        ~typing.Generator[T_yield, T_send, T_return]
+            the generator iterator
         """
         raise NotImplementedError()
 
@@ -78,7 +82,13 @@ class GeneratorCallable(t.Generic[T_yield, T_send, T_return]):
     Note that :term:`generator functions <generator>` already implement this.
     """
     def __call__(self, *args, **kwargs):
-        """ -> t.Generator[T_yield, T_send, T_return]"""
+        """
+
+        Returns
+        -------
+        ~typing.Generator[T_yield, T_send, T_return]
+            the resulting generator
+        """
         raise NotImplementedError()
 
 
@@ -86,6 +96,7 @@ class ReusableGeneratorMeta(CallableAsMethod, type(Generable)):
     pass
 
 
+# taken from ``six.with_metaclass``
 def with_metaclass(meta, *bases):
     """Create a base class with a metaclass."""
     # This requires a bit of explanation: the basic idea is to make a dummy
@@ -150,6 +161,7 @@ class ReusableGenerator(
         Returns
         -------
         ReusableGenerator
+            a copy with replaced fields
         """
         copied = self.__signature__.bind(*self._bound_args.args,
                                          **self._bound_args.kwargs)
