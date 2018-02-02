@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
     from funcsigs import signature
 
 
-def _started(gen):
+def _is_just_started(gen):
     return gen.gi_frame.f_lasti == -1
 
 
@@ -20,6 +20,7 @@ __all__ = [
     'reusable',
     'oneyield',
     'return_',
+    'sendreturn',
 
     'imap_yield',
     'imap_send',
@@ -30,7 +31,6 @@ __all__ = [
     'map_yield',
     'map_send',
     'map_return',
-    'sendreturn',
 
     'compose',
 ]
@@ -41,12 +41,16 @@ T_send_new = t.TypeVar('T_yield_new')
 
 
 def return_(value):
-    """shortcut to raise a StopIteration with value"""
+    """Shortcut to raise a StopIteration with value
+
+    Use this instead of a generator return statement
+    to ensure python2-compatibility.
+    """
     raise StopIteration(value)
 
 
 def reusable(func):
-    """create a reusable class from a generator function
+    """Create a reusable class from a generator function
 
     Parameters
     ----------
@@ -57,7 +61,8 @@ def reusable(func):
     ----
     * the callable must have an inspectable signature
     * If bound to a class, the new reusable generator is callable as a method.
-      To opt out of this, add a :func:`staticmethod` decorator above.
+      To opt out of this, add a :func:`staticmethod` decorator above
+      this decorator.
 
     """
     sig = signature(func)
@@ -81,7 +86,11 @@ def reusable(func):
 
 
 class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
-    """decorate a function to turn it into a basic generator"""
+    """Decorate a function to turn it into a basic generator
+
+    The resulting generator yields the function's return value once,
+    and then returns the value it is sent (with ``send()``).
+    """
     def __init__(self, func):
         self.__wrapped__ = func
 
@@ -90,11 +99,11 @@ class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
 
 
 def sendreturn(gen, value):
-    """send an item into a generator expecting a final return value
+    """Send an item into a generator expecting a final return value
 
     Parameters
     ----------
-    gen: t.Generator[T_yield, T_send, T_return]
+    gen: ~typing.Generator[T_yield, T_send, T_return]
         the generator to send the value to
     value: T_send
         the value to send
@@ -107,6 +116,7 @@ def sendreturn(gen, value):
     Returns
     -------
     T_return
+        the generator's return value
     """
     try:
         gen.send(value)
@@ -117,63 +127,65 @@ def sendreturn(gen, value):
 
 
 def imap_yield(func, gen):
-    """apply a function to all ``yield`` values of a generator
+    """Apply a function to all ``yield`` values of a generator
 
     Parameters
     ----------
-    func: t.Callable[[T_yield], T_mapped],
+    func: ~typing.Callable[[T_yield], T_mapped]
         the function to apply
     gen: Generable[T_yield, T_send, T_return]
         the generator iterable.
 
     Returns
     -------
-    t.Generator[T_mapped, T_send, T_return]
+    ~typing.Generator[T_mapped, T_send, T_return]
+        the mapped generator
     """
     gen = iter(gen)
-    assert _started(gen)
+    assert _is_just_started(gen)
     item = next(gen)
     while True:
         item = gen.send((yield func(item)))
 
 
 def imap_send(func, gen):
-    """apply a function to all ``send`` values of a generator
+    """Apply a function to all ``send`` values of a generator
 
     Parameters
     ----------
-    func: t.Callable[[T_send], T_mapped],
+    func: ~typing.Callable[[T_send], T_mapped]
         the function to apply
     gen: Generable[T_yield, T_mapped, T_return]
         the generator iterable.
 
     Returns
     -------
-    t.Generator[T_yield, T_send, T_return]
+    ~typing.Generator[T_yield, T_send, T_return]
+        the mapped generator
     """
     gen = iter(gen)
-    assert _started(gen)
+    assert _is_just_started(gen)
     item = next(gen)
     while True:
         item = gen.send(func((yield item)))
 
 
 def imap_return(func, gen):
-    """apply a function to the ``return`` value of a generator
+    """Apply a function to the ``return`` value of a generator
 
     Parameters
     ----------
-    func: t.Callable[[T_return], T_mapped],
+    func: ~typing.Callable[[T_return], T_mapped]
         the function to apply
     gen: Generable[T_yield, T_send, T_return]
         the generator iterable.
 
     Returns
     -------
-    t.Generator[T_yield, T_send, T_mapped]
+    ~typing.Generator[T_yield, T_send, T_mapped]
     """
     gen = iter(gen)
-    assert _started(gen)
+    assert _is_just_started(gen)
     # this is basically:
     #     return func((yield from gen))
     # but without yield from
@@ -189,28 +201,24 @@ def imap_return(func, gen):
             return_(func(e.args[0]))
 
 
-_Relay = t.Callable[[T_yield], t.Generator[T_yield_new,
-                                           T_send_new,
-                                           T_send]]
-
-
 def irelay(gen, thru):
-    """create a new generator by relaying yield/send interactions
+    """Create a new generator by relaying yield/send interactions
     through another generator
 
     Parameters
     ----------
-    gen: Generable[T_yield, T_send, T_return],
+    gen: Generable[T_yield, T_send, T_return]
         the original generator
-    thru: _Relay
-        the piping generator callable
+    thru: ~typing.Callable[[T_yield], ~typing.Generator]
+        the generator callable through which each interaction is relayed
 
     Returns
     -------
-    t.Generator[T_yield_new, T_send_new, T_return]
+    ~typing.Generator
+        the relayed generator
     """
     gen = iter(gen)
-    assert _started(gen)
+    assert _is_just_started(gen)
     item = next(gen)
     while True:
         # the following is basically:
@@ -260,8 +268,27 @@ def irelay(gen, thru):
 
 
 class map_yield:
-    """decorate a generator callable to apply function to
+    """Decorate a generator callable to apply a function to
     each ``yield`` value
+
+    Example
+    -------
+
+    >>> @map_yield('the current max is: {}'.format)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    'the current max is: 5'
+    >>> gen.send(11)
+    'the current max is: 11'
+    >>> gen.send(104)
+    StopIteration(104)
 
     See also
     --------
@@ -275,8 +302,27 @@ class map_yield:
 
 
 class map_send:
-    """decorate a generator callable to apply functions to
+    """Decorate a generator callable to apply functions to
     each ``send`` value
+
+    Example
+    -------
+
+    >>> @map_send(int)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    5
+    >>> gen.send(11.3)
+    11
+    >>> gen.send('104')
+    104
 
     See also
     --------
@@ -290,8 +336,27 @@ class map_send:
 
 
 class map_return:
-    """decorate a generator callable to apply functions to
+    """Decorate a generator callable to apply functions to
     the ``return`` value
+
+    Example
+    -------
+
+    >>> @map_return('final value: {}'.format)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    5
+    >>> gen.send(11.3)
+    11.3
+    >>> gen.send(104)
+    StopIteration('final value: 104')
 
     See also
     --------
@@ -305,8 +370,37 @@ class map_return:
 
 
 class relay:
-    """decorate a generator callable to relay yield/send values
-    through other generators
+    """Decorate a generator callable to relay yield/send values
+    through another generator
+
+    Example
+    -------
+
+    >>> def try_until_positive(outvalue):
+    ...     value = yield outvalue
+    ...     while value < 0:
+    ...         value = yield 'not positive, try again'
+    ...     return value
+    ...
+    >>> @relay(try_until_positive)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    5
+    >>> gen.send(-4)
+    'not positive, try again'
+    >>> gen.send(-1)
+    'not positive, try again'
+    >>> gen.send(8)
+    8
+    >>> gen.send(104)
+    StopIteration(104)
 
     See also
     --------
