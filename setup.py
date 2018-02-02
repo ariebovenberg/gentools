@@ -38,9 +38,10 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'typing>=3.6.2;python_version<"3.5"'
+        'typing>=3.6.2;python_version<"3.5"',
+        'funcsigs>=1.0.2;python_version<"3.4"',
     ],
-    keywords=['generators', 'itertools'],
+    keywords=['generators', 'itertools', 'coroutines'],
     python_requires='>=2.7',
     packages=find_packages(exclude=('tests', 'docs'))
 )
