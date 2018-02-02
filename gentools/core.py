@@ -41,6 +41,7 @@ T_send_new = t.TypeVar('T_yield_new')
 
 
 def return_(value):
+    """shortcut to raise a StopIteration with value"""
     raise StopIteration(value)
 
 
