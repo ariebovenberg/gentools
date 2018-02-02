@@ -76,9 +76,9 @@ def reusable(func):
             (name, property(compose(itemgetter(name),
                                     attrgetter('_bound_args.arguments'))))
             for name in sig.parameters
-        ] + [
+        ] + ([
             ('__qualname__',  origin.__qualname__),
-        ] if sys.version_info > (3, ) else []))
+        ] if sys.version_info > (3, ) else [])))
 
 
 class oneyield(GeneratorCallable[T_yield, T_send, T_send]):

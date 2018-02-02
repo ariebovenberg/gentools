@@ -96,26 +96,25 @@ class ReusableGeneratorMeta(CallableAsMethod, type(Generable)):
     pass
 
 
-# taken from ``six.with_metaclass``
-def with_metaclass(meta, *bases):
-    """Create a base class with a metaclass."""
-    # This requires a bit of explanation: the basic idea is to make a dummy
-    # metaclass for one level of class instantiation that replaces itself with
-    # the actual metaclass.
-    class metaclass(type):
+# copied from ``six.add_metaclass``
+def add_metaclass(metaclass):
+    """Class decorator for creating a class with a metaclass."""
+    def wrapper(cls):
+        orig_vars = cls.__dict__.copy()
+        slots = orig_vars.get('__slots__')
+        if slots is not None:
+            if isinstance(slots, str):
+                slots = [slots]
+            for slots_var in slots:
+                orig_vars.pop(slots_var)
+        orig_vars.pop('__dict__', None)
+        orig_vars.pop('__weakref__', None)
+        return metaclass(cls.__name__, cls.__bases__, orig_vars)
+    return wrapper
 
-        def __new__(cls, name, this_bases, d):
-            return meta(name, bases, d)
 
-        @classmethod
-        def __prepare__(cls, name, this_bases):
-            return meta.__prepare__(name, bases)
-    return type.__new__(metaclass, 'temporary_class', (), {})
-
-
-class ReusableGenerator(
-        with_metaclass(ReusableGeneratorMeta,
-                       Generable[T_yield, T_send, T_return])):
+@add_metaclass(ReusableGeneratorMeta)
+class ReusableGenerator(Generable[T_yield, T_send, T_return]):
     """base class for reusable generator functions
 
     Warning
