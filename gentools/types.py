@@ -1,7 +1,7 @@
 """base classes and interfaces"""
+import sys
 import abc
 import inspect
-import sys
 import typing as t
 from collections import OrderedDict
 from itertools import starmap
@@ -18,10 +18,17 @@ T_yield = t.TypeVar('T_yield')
 T_send = t.TypeVar('T_send')
 T_return = t.TypeVar('T_return')
 
-try:
-    from inspect import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
-except ImportError:  # pragma: no cover
+if sys.version_info < (3, ):
     from funcsigs import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
+
+    def __():
+        yield
+    GeneratorType = type(__())
+    del __
+
+else:
+    from inspect import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
+    from types import GeneratorType
 
 
 # copied from BoundArguments.apply_defaults from python3.5
@@ -63,12 +70,7 @@ class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
         raise NotImplementedError()
 
 
-try:
-    from types import GeneratorType
-except ImportError:  # pragma: no cover
-    pass
-else:
-    Generable.register(GeneratorType)
+Generable.register(GeneratorType)
 
 
 class GeneratorCallable(t.Generic[T_yield, T_send, T_return]):

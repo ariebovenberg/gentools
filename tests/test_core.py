@@ -88,6 +88,19 @@ class TestReusable:
         gen = mygen(4, foo=5)
         assert pickle.loads(pickle.dumps(gen)) == gen
 
+    @pytest.mark.skipif(sys.version_info < (3, ),
+                        reason='requires python 3')
+    def test_qualname(self):
+
+        class Foo:
+
+            @gentools.reusable
+            def bar(bla):
+                yield
+                return
+
+        assert Foo.bar.__qualname__.endswith('Foo.bar')
+
     def test_callable_as_method(self):
 
         class Parent:
@@ -111,7 +124,6 @@ class TestReusable:
         assert list(Parent.mygen(p, 8)) == [4, 8]
         gen = p.mygen(9)
         assert list(gen) == list(gen) == [4, 9]
-        # assert p.mygen.__self__ is p
 
         assert list(Parent.staticgen(3, 9)) == [3, 9]
         assert list(p.staticgen(3, 9)) == [3, 9]

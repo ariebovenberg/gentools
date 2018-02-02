@@ -1,20 +1,9 @@
 import sys
-import typing as t
 from functools import partial, reduce
 from operator import attrgetter, itemgetter
 
 from .types import GeneratorCallable, ReusableGenerator, T_send, T_yield
 from .utils import compose
-
-try:
-    from inspect import signature
-except ImportError:  # pragma: no cover
-    from funcsigs import signature
-
-
-def _is_just_started(gen):
-    return gen.gi_frame.f_lasti == -1
-
 
 __all__ = [
     'reusable',
@@ -35,9 +24,15 @@ __all__ = [
     'compose',
 ]
 
-T_mapped = t.TypeVar('T_mapped')
-T_yield_new = t.TypeVar('T_yield_new')
-T_send_new = t.TypeVar('T_yield_new')
+
+if sys.version_info < (3, ):
+    from funcsigs import signature
+else:
+    from inspect import signature
+
+
+def _is_just_started(gen):
+    return gen.gi_frame.f_lasti == -1
 
 
 def return_(value):
@@ -75,14 +70,15 @@ def reusable(func):
         dict([
             ('__doc__',       origin.__doc__),
             ('__module__',    origin.__module__),
-            # ('__qualname__',  origin.__qualname__),
             ('__signature__', sig),
             ('__wrapped__',   staticmethod(func)),
         ] + [
             (name, property(compose(itemgetter(name),
                                     attrgetter('_bound_args.arguments'))))
             for name in sig.parameters
-        ]))
+        ] + [
+            ('__qualname__',  origin.__qualname__),
+        ] if sys.version_info > (3, ) else []))
 
 
 class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
