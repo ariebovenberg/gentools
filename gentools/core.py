@@ -181,6 +181,25 @@ class map_yield:
     """decorate a generator callable to apply function to
     each ``yield`` value
 
+    Example
+    -------
+
+    >>> @map_yield('the current max is: {}'.format)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    'the current max is: 5'
+    >>> gen.send(11)
+    'the current max is: 11'
+    >>> gen.send(104)
+    StopIteration(104)
+
     See also
     --------
     :func:`~gentools.core.imap_yield`
@@ -195,6 +214,25 @@ class map_yield:
 class map_send:
     """decorate a generator callable to apply functions to
     each ``send`` value
+
+    Example
+    -------
+
+    >>> @map_send(int)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    5
+    >>> gen.send(11.3)
+    11
+    >>> gen.send('104')
+    104
 
     See also
     --------
@@ -211,6 +249,25 @@ class map_return:
     """decorate a generator callable to apply functions to
     the ``return`` value
 
+    Example
+    -------
+
+    >>> @map_return('final value: {}'.format)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    5
+    >>> gen.send(11.3)
+    11.3
+    >>> gen.send(104)
+    StopIteration('final value: 104')
+
     See also
     --------
     :func:`~gentools.core.imap_return`
@@ -225,6 +282,35 @@ class map_return:
 class relay:
     """decorate a generator callable to relay yield/send values
     through other generators
+
+    Example
+    -------
+
+    >>> def try_until_positive(outvalue):
+    ...     value = yield outvalue
+    ...     while value < 0:
+    ...         value = yield 'not positive, try again'
+    ...     return value
+    ...
+    >>> @relay(try_until_positive)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    5
+    >>> gen.send(-4)
+    'not positive, try again'
+    >>> gen.send(-1)
+    'not positive, try again'
+    >>> gen.send(8)
+    8
+    >>> gen.send(104)
+    StopIteration(104)
 
     See also
     --------
