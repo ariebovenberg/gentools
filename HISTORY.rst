@@ -4,11 +4,16 @@ Release history
 development
 +++++++++++
 
-1.1.0 (2018-02-02)
+1.1.0 (2018-02-??)
 ++++++++++++++++++
 
 - python2 support
 - improvements to documentation
+
+1.0.2 (2018-02-08)
+++++++++++++++++++
+
+- add more examples to docs
 
 1.0.1 (2018-01-27)
 ++++++++++++++++++

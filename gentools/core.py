@@ -398,6 +398,35 @@ class relay:
     >>> gen.send(104)
     StopIteration(104)
 
+    Example
+    -------
+
+    >>> def try_until_positive(outvalue):
+    ...     value = yield outvalue
+    ...     while value < 0:
+    ...         value = yield 'not positive, try again'
+    ...     return value
+    ...
+    >>> @relay(try_until_positive)
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+    ...
+    >>> gen = my_max(5)
+    >>> next(gen)
+    5
+    >>> gen.send(-4)
+    'not positive, try again'
+    >>> gen.send(-1)
+    'not positive, try again'
+    >>> gen.send(8)
+    8
+    >>> gen.send(104)
+    StopIteration(104)
+
     See also
     --------
     :func:`~gentools.core.irelay`
