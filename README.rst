@@ -108,3 +108,15 @@ Examples
    8
    >>> gen.send(104)
    StopIteration(104)
+
+- make python 2/3 compatible generators with ``return``
+
+.. code-block:: python
+
+   >>> @py2_compatible
+   ... def my_max(value):
+   ...     while value < 100:
+   ...         newvalue = yield value
+   ...         if newvalue > value:
+   ...             value = newvalue
+   ...     return_(value)

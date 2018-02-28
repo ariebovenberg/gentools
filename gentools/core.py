@@ -9,7 +9,6 @@ from .utils import PY2, compose
 __all__ = [
     'reusable',
     'oneyield',
-    'return_',
     'sendreturn',
 
     'imap_yield',
@@ -23,6 +22,7 @@ __all__ = [
     'map_return',
 
     'compose',
+
     'py2_compatible',
     'return_',
 ]
@@ -39,12 +39,46 @@ def _is_just_started(gen):
 
 
 def py2_compatible(func):
-    """decorate a generator function to make it python2 and 3 compatible"""
+    """Decorate a generator function to make it Python 2/3 compatible.
+    Use together with :func:`return_`.
+
+    Example
+    -------
+
+    >>> @py2_compatible
+    ... def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return_(value)
+
+    is equivalent to:
+
+    >>> def my_max(value):
+    ...     while value < 100:
+    ...         newvalue = yield value
+    ...         if newvalue > value:
+    ...             value = newvalue
+    ...     return value
+
+    Note
+    ----
+    This is necessary because PEP479 makes it impossible to replace
+    ``return`` with ``raise StopIteration`` in newer python 3 versions.
+
+    Warning
+    -------
+    Although the wrapped generator acts like a generator,
+    it is not an strict generator instance.
+    For most purposes (e.g. ``yield from``) it works fine,
+    but :func:`~inspect.isgenerator` will return ``False``.
+    """
     return compose(GeneratorProxy, func)
 
 
 def return_(value):
-    """py2+3 compatible way to return a value from a generator
+    """Python 2/3 compatible way to return a value from a generator
 
     Use only with the :func:`py2_compatible` decorator"""
     raise GeneratorReturn(value)
@@ -376,35 +410,6 @@ class map_return:
 class relay:
     """Decorate a generator callable to relay yield/send values
     through another generator
-
-    Example
-    -------
-
-    >>> def try_until_positive(outvalue):
-    ...     value = yield outvalue
-    ...     while value < 0:
-    ...         value = yield 'not positive, try again'
-    ...     return value
-    ...
-    >>> @relay(try_until_positive)
-    ... def my_max(value):
-    ...     while value < 100:
-    ...         newvalue = yield value
-    ...         if newvalue > value:
-    ...             value = newvalue
-    ...     return value
-    ...
-    >>> gen = my_max(5)
-    >>> next(gen)
-    5
-    >>> gen.send(-4)
-    'not positive, try again'
-    >>> gen.send(-1)
-    'not positive, try again'
-    >>> gen.send(8)
-    8
-    >>> gen.send(104)
-    StopIteration(104)
 
     Example
     -------
