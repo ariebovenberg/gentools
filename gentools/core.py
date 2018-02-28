@@ -2,8 +2,9 @@ import sys
 from functools import partial, reduce
 from operator import attrgetter, itemgetter
 
-from .types import GeneratorCallable, ReusableGenerator, T_send, T_yield
-from .utils import compose
+from .types import (GeneratorCallable, GeneratorProxy, GeneratorReturn,
+                    ReusableGenerator, T_send, T_yield)
+from .utils import PY2, compose
 
 __all__ = [
     'reusable',
@@ -22,10 +23,12 @@ __all__ = [
     'map_return',
 
     'compose',
+    'py2_compatible',
+    'return_',
 ]
 
 
-if sys.version_info < (3, ):
+if PY2:  # pragma: no cover
     from funcsigs import signature
 else:
     from inspect import signature
@@ -35,13 +38,16 @@ def _is_just_started(gen):
     return gen.gi_frame.f_lasti == -1
 
 
-def return_(value):
-    """Shortcut to raise a StopIteration with value
+def py2_compatible(func):
+    """decorate a generator function to make it python2 and 3 compatible"""
+    return compose(GeneratorProxy, func)
 
-    Use this instead of a generator return statement
-    to ensure python2-compatibility.
-    """
-    raise StopIteration(value)
+
+def return_(value):
+    """py2+3 compatible way to return a value from a generator
+
+    Use only with the :func:`py2_compatible` decorator"""
+    raise GeneratorReturn(value)
 
 
 def reusable(func):
@@ -90,6 +96,7 @@ class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
     def __init__(self, func):
         self.__wrapped__ = func
 
+    @py2_compatible
     def __call__(self, *args, **kwargs):
         return_((yield self.__wrapped__(*args, **kwargs)))
 
@@ -117,7 +124,7 @@ def sendreturn(gen, value):
     try:
         gen.send(value)
     except StopIteration as e:
-        return e.args[0]
+        return e.value
     else:
         raise RuntimeError('generator did not return as expected')
 
@@ -166,6 +173,7 @@ def imap_send(func, gen):
         item = gen.send(func((yield item)))
 
 
+@py2_compatible
 def imap_return(func, gen):
     """Apply a function to the ``return`` value of a generator
 

@@ -1,5 +1,8 @@
 """Miscellaneous tools, boilerplate, and shortcuts"""
+import sys
 from functools import partial
+
+PY2 = sys.version_info < (3, )
 
 
 def identity(obj):

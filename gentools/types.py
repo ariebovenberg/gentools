@@ -1,12 +1,13 @@
 """base classes and interfaces"""
-import sys
 import abc
 import inspect
+import sys
 import typing as t
 from collections import OrderedDict
 from itertools import starmap
+from operator import attrgetter
 
-from .utils import CallableAsMethod
+from .utils import PY2, CallableAsMethod
 
 __all__ = [
     'Generable',
@@ -18,7 +19,7 @@ T_yield = t.TypeVar('T_yield')
 T_send = t.TypeVar('T_send')
 T_return = t.TypeVar('T_return')
 
-if sys.version_info < (3, ):
+if PY2:  # pragma: no cover
     from funcsigs import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
 
     def __():
@@ -31,7 +32,7 @@ else:
     from types import GeneratorType
 
 
-# copied from BoundArguments.apply_defaults from python3.5
+# adapted from BoundArguments.apply_defaults from python3.5
 if sys.version_info < (3, 5):  # pragma: no cover
     def _apply_defaults(bound_sig):
         arguments = bound_sig.arguments
@@ -54,6 +55,10 @@ if sys.version_info < (3, 5):  # pragma: no cover
         bound_sig.arguments = OrderedDict(new_arguments)
 else:  # pragma: no cover
     _apply_defaults = inspect.BoundArguments.apply_defaults
+
+
+class GeneratorReturn(Exception):
+    pass
 
 
 class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
@@ -97,7 +102,7 @@ class ReusableGeneratorMeta(CallableAsMethod, type(Generable)):
 
 
 # copied from ``six.add_metaclass``
-def add_metaclass(metaclass):
+def add_metaclass(metaclass):  # pragma: no cover
     """Class decorator for creating a class with a metaclass."""
     def wrapper(cls):
         orig_vars = cls.__dict__.copy()
@@ -113,14 +118,65 @@ def add_metaclass(metaclass):
     return wrapper
 
 
+class _catch_genreturn(object):
+    __slots__ = ()
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc, tb):
+        if exc_type and issubclass(exc_type, GeneratorReturn):
+            new_exc = StopIteration(exc.args[0])
+            new_exc.value = exc.args[0]
+            raise new_exc
+
+
+catch_genreturn = _catch_genreturn()
+
+
+class GeneratorProxy(object):
+    """a python2&3-compatible generator proxy
+
+    This is needed to provide a consistent way to "return" from a generator
+    """
+    __slots__ = '_gen'
+
+    def __init__(self, gen):
+        assert isinstance(gen, GeneratorType)
+        self._gen = gen
+
+    gi_running = property(attrgetter('_gen.gi_running'))
+    gi_frame = property(attrgetter('_gen.gi_frame'))
+    gi_code = property(attrgetter('_gen.gi_code'))
+
+    def __iter__(self):
+        return self
+
+    def send(self, value):
+        with catch_genreturn:
+            return self._gen.send(value)
+
+    if PY2:  # pragma: no cover
+        def next(self):
+            with catch_genreturn:
+                return next(self._gen)
+    else:
+        def __next__(self):
+            with catch_genreturn:
+                return next(self._gen)
+
+    close = property(attrgetter('_gen.close'))
+    throw = property(attrgetter('_gen.throw'))
+
+
 @add_metaclass(ReusableGeneratorMeta)
 class ReusableGenerator(Generable[T_yield, T_send, T_return]):
     """base class for reusable generator functions
 
     Warning
     -------
-    * Do not subclass directly.
-      Create subclasses with the :func:`~gentools.core.reusable` decorator.
+    * Do not subclass directly. Subclasses are created with
+      the :func:`~gentools.core.reusable` decorator.
     * Instances if this class are only picklable on python 3.5+
     """
     def __init__(self, *args, **kwargs):

@@ -1,148 +1,97 @@
-import pickle
-import sys
-import types
+"""tests interoperability with python3 syntax and features"""
+import inspect
 from functools import reduce
 
 import pytest
 
 import gentools
-from gentools import py2_compatible, return_
 from gentools.utils import compose
 
-from .common import MyMax, emptygen, mymax, try_until_even, try_until_positive
 
-try:
-    from inspect import signature
-except ImportError:
-    from funcsigs import signature
+def try_until_positive(req):
+    """an example relay"""
+    response = yield req
+    while response < 0:
+        response = yield 'NOT POSITIVE!'
+    return response
 
 
-def unwrap(func):
-    while hasattr(func, '__wrapped__'):
-        func = func.__wrapped__
-    return func
+def try_until_even(req):
+    """an example relay"""
+    response = yield req
+    while response % 2:
+        response = yield 'NOT EVEN!'
+    return response
+
+
+def mymax(val):
+    """an example generator function"""
+    while val < 100:
+        sent = yield val
+        if sent > val:
+            val = sent
+    return val * 3
+
+
+class MyMax:
+    """an example generator iterable"""
+
+    def __init__(self, start):
+        self.start = start
+
+    def __iter__(self):
+        val = self.start
+        while val < 100:
+            sent = yield val
+            if sent > val:
+                val = sent
+        return val * 3
+
+
+def emptygen():
+    if False:
+        yield
+    return 99
 
 
 @gentools.reusable
-def mygen(a, foo):
+def mygen(a: int, *, foo):
     yield a
     yield foo
 
 
-class TestReusable:
+class TestPy2Compatible:
 
-    @pytest.mark.skipif(sys.version_info < (3, 5),
-                        reason='requires python 3.5+')
-    def test_picklable(self):
-        gen = mygen(4, foo=5)
-        assert pickle.loads(pickle.dumps(gen)) == gen
+    def test_simple(self):
 
-    @pytest.mark.skipif(sys.version_info < (3, ),
-                        reason='requires python 3')
-    def test_qualname(self):
+        @gentools.py2_compatible
+        def mymax(val):
+            """an example generator function"""
+            while val < 100:
+                sent = yield val
+                if sent > val:
+                    val = sent
+            gentools.return_(val * 3)
 
-        class Foo:
+        def delegator(start):
+            return (yield from mymax(start))
 
-            @gentools.reusable
-            def bar(bla):
-                yield
-                return
+        gen = delegator(4)
 
-        assert Foo.bar.__qualname__.endswith('Foo.bar')
-
-    def test_callable_as_method(self):
-
-        class Parent:
-            def __init__(self, foo):
-                self.foo = foo
-
-            @gentools.reusable
-            def mygen(self, value):
-                yield self.foo
-                yield value
-
-            # opt out with staticmethod
-            @staticmethod
-            @gentools.reusable
-            def staticgen(foo, bar):
-                yield foo
-                yield bar
-
-        p = Parent(4)
-
-        assert list(Parent.mygen(p, 8)) == [4, 8]
-        gen = p.mygen(9)
-        assert list(gen) == list(gen) == [4, 9]
-
-        assert list(Parent.staticgen(3, 9)) == [3, 9]
-        assert list(p.staticgen(3, 9)) == [3, 9]
-
-    def test_example(self):
-
-        class mywrapper:
-            def __init__(self, func):
-                self.__wrapped__ = func
-                self.__signature__ = signature(func).replace(
-                    return_annotation=str)
-
-            def __call__(self, *args, **kwargs):
-                inner = self.__wrapped__(*args, **kwargs)
-                yield str(next(inner))
-
-        @gentools.reusable
-        @mywrapper  # dummy to test combining with other decorators
-        @py2_compatible
-        def gentype(a, b, *cs, **fs):
-            """my docstring"""
-            return_((yield sum([a, b, sum(cs), sum(fs.values()), a])))
-
-        gentype.__qualname__ = 'mymodule.gentype'
-
-        assert issubclass(gentype, gentools.Generable)
-        assert isinstance(unwrap, types.FunctionType)
-        gentype.__name__ == 'myfunc'
-        gentype.__doc__ == 'my docstring'
-        gentype.__module__ == 'test_core'
-        gen = gentype(4, 5, foo=10)
-
-        assert {'a', 'b', 'cs', 'fs'} < set(dir(gen))
-        assert gen.a == 4
-        assert gen.b == 5
-        assert gen.cs == ()
-        assert gen.fs == {'foo': 10}
-
-        assert next(iter(gen)) == '23'
-        assert next(iter(gen)) == '23'  # reusable
-
-        othergen = gentype(4, b=5, foo=10)
-        assert gen == othergen
-        assert not gen != othergen
-        assert hash(gen) == hash(othergen)
-
-        assert repr(gen) == ("mymodule.gentype("
-                             "a=4, b=5, cs=(), fs={'foo': 10})")
-
-        assert not gen == gentype(3, 4, 5, d=10)
-        assert gen != gentype(1, 2, d=7)
-
-        assert not gen == object()
-        assert gen != object()
-
-        changed = gen.replace(b=9)
-        assert gen == gentype(4, 5, foo=10)
-        assert changed == gentype(4, 9, foo=10)
-        assert changed.b == 9
+        assert next(gen) == 4
+        assert gen.send(7) == 7
+        assert gen.send(3) == 7
+        assert gentools.sendreturn(gen, 103) == 309
 
 
 class TestSendReturn:
 
     def test_ok(self):
 
-        @py2_compatible
         def mygen(n):
             while n != 0:
                 n = yield n + 1
-            return_('foo')
+            return 'foo'
 
         gen = mygen(4)
         assert next(gen) == 5
@@ -150,11 +99,10 @@ class TestSendReturn:
 
     def test_no_return(self):
 
-        @py2_compatible
         def mygen(n):
             while n != 0:
                 n = yield n + 1
-            return_('foo')
+            return 'foo'
 
         gen = mygen(4)
         assert next(gen) == 5
@@ -168,7 +116,7 @@ class TestIMapYield:
         try:
             next(gentools.imap_yield(str, emptygen()))
         except StopIteration as e:
-            assert e.args[0] == 99
+            assert e.value == 99
 
     def test_simple(self):
         mapped = gentools.imap_yield(str, mymax(4))
@@ -185,7 +133,7 @@ class TestIMapSend:
         try:
             next(gentools.imap_send(int, emptygen()))
         except StopIteration as e:
-            assert e.args[0] == 99
+            assert e.value == 99
 
     def test_simple(self):
         mapped = gentools.imap_send(int, mymax(4))
@@ -210,7 +158,7 @@ class TestIMapReturn:
         try:
             next(gentools.imap_return(str, emptygen()))
         except StopIteration as e:
-            assert e.args[0] == '99'
+            assert e.value == '99'
 
     def test_simple(self):
         mapped = gentools.imap_return(str, mymax(4))
@@ -235,7 +183,7 @@ class TestIRelay:
         try:
             next(gentools.irelay(emptygen(), try_until_positive))
         except StopIteration as e:
-            assert e.args[0] == 99
+            assert e.value == 99
 
     def test_simple(self):
         relayed = gentools.irelay(mymax(4), try_until_positive)
@@ -298,7 +246,7 @@ def test_oneyield():
         return a + b + c
 
     gen = myfunc(1, 2, 3)
-    assert unwrap(myfunc).__name__ == 'myfunc'
+    assert inspect.unwrap(myfunc).__name__ == 'myfunc'
     assert next(gen) == 6
     assert gentools.sendreturn(gen, 9) == 9
 
@@ -358,4 +306,4 @@ def test_combining_decorators():
     assert gen.send('5') == 'NOT EVEN!'
     assert gentools.sendreturn(gen, '104') == 'result: 312'
 
-    assert unwrap(decorated) is unwrap(mymax)
+    assert inspect.unwrap(decorated) is mymax
