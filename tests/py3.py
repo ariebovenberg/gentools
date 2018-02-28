@@ -1,8 +1,6 @@
-"""py2/3-compatible defined generators"""
-from gentools import py2_compatible, return_
+"""only python3-compatible generators"""
 
 
-@py2_compatible
 def try_until_positive(req):
     """an example relay"""
     response = yield req
@@ -10,13 +8,12 @@ def try_until_positive(req):
         try:
             response = yield 'NOT POSITIVE!'
         except GeneratorExit:
-            return_('positive: closed')
+            return ('positive: closed')
         except ValueError:
             yield 'caught ValueError'
-    return_(response)
+    return response
 
 
-@py2_compatible
 def try_until_even(req):
     """an example relay"""
     response = yield req
@@ -24,25 +21,24 @@ def try_until_even(req):
         try:
             response = yield 'NOT EVEN!'
         except GeneratorExit:
-            return_('even: closed')
+            return ('even: closed')
         except ValueError:
             yield 'caught ValueError'
-    return_(response)
+    return response
 
 
-@py2_compatible
 def mymax(val):
     """an example generator function"""
     while val < 100:
         try:
             sent = yield val
         except GeneratorExit:
-            return_('mymax: closed')
+            return ('mymax: closed')
         except ValueError:
             yield 'caught ValueError'
         if sent > val:
             val = sent
-    return_(val * 3)
+    return val * 3
 
 
 class MyMax:
@@ -51,23 +47,21 @@ class MyMax:
     def __init__(self, start):
         self.start = start
 
-    @py2_compatible
     def __iter__(self):
         val = self.start
         while val < 100:
             try:
                 sent = yield val
             except GeneratorExit:
-                return_('mymax: closed')
+                return ('mymax: closed')
             except ValueError:
                 yield 'caught ValueError'
             if sent > val:
                 val = sent
-        return_(val * 3)
+        return val * 3
 
 
-@py2_compatible
 def emptygen():
     if False:
         yield
-    return_(99)
+    return 99

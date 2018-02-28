@@ -7,14 +7,24 @@ import pytest
 
 import gentools
 from gentools import py2_compatible, return_
-from gentools.utils import compose
+from gentools.utils import compose, PY2
 
-from .common import MyMax, emptygen, mymax, try_until_even, try_until_positive
+from . import common
 
-try:
-    from inspect import signature
-except ImportError:
+
+def with_generator(name):
+    """use a python 2/3 parametrized generator"""
+    gens = [getattr(common, name)]
+    if not PY2:
+        from . import py3
+        gens.append(getattr(py3, name))
+    return pytest.mark.parametrize(name, gens)
+
+
+if PY2:
     from funcsigs import signature
+else:
+    from inspect import signature
 
 
 def unwrap(func):
@@ -136,41 +146,32 @@ class TestReusable:
 
 class TestSendReturn:
 
-    def test_ok(self):
+    @with_generator('mymax')
+    def test_ok(self, mymax):
+        gen = mymax(4)
+        assert next(gen) == 4
+        assert gentools.sendreturn(gen, 105) == 315
 
-        @py2_compatible
-        def mygen(n):
-            while n != 0:
-                n = yield n + 1
-            return_('foo')
+    @with_generator('mymax')
+    def test_no_return(self, mymax):
 
-        gen = mygen(4)
-        assert next(gen) == 5
-        assert gentools.sendreturn(gen, 0) == 'foo'
-
-    def test_no_return(self):
-
-        @py2_compatible
-        def mygen(n):
-            while n != 0:
-                n = yield n + 1
-            return_('foo')
-
-        gen = mygen(4)
-        assert next(gen) == 5
+        gen = mymax(4)
+        assert next(gen) == 4
         with pytest.raises(RuntimeError, match='did not return'):
             gentools.sendreturn(gen, 1)
 
 
 class TestIMapYield:
 
-    def test_empty(self):
+    @with_generator('emptygen')
+    def test_empty(self, emptygen):
         try:
             next(gentools.imap_yield(str, emptygen()))
         except StopIteration as e:
-            assert e.args[0] == 99
+            assert e.value == 99
 
-    def test_simple(self):
+    @with_generator('mymax')
+    def test_simple(self, mymax):
         mapped = gentools.imap_yield(str, mymax(4))
 
         assert next(mapped) == '4'
@@ -181,13 +182,15 @@ class TestIMapYield:
 
 class TestIMapSend:
 
-    def test_empty(self):
+    @with_generator('emptygen')
+    def test_empty(self, emptygen):
         try:
             next(gentools.imap_send(int, emptygen()))
         except StopIteration as e:
-            assert e.args[0] == 99
+            assert e.value == 99
 
-    def test_simple(self):
+    @with_generator('mymax')
+    def test_simple(self, mymax):
         mapped = gentools.imap_send(int, mymax(4))
 
         assert next(mapped) == 4
@@ -195,7 +198,8 @@ class TestIMapSend:
         assert mapped.send(7.3) == 7
         assert gentools.sendreturn(mapped, '104') == 312
 
-    def test_any_iterable(self):
+    @with_generator('MyMax')
+    def test_any_iterable(self, MyMax):
         mapped = gentools.imap_send(int, MyMax(4))
 
         assert next(mapped) == 4
@@ -206,13 +210,15 @@ class TestIMapSend:
 
 class TestIMapReturn:
 
-    def test_empty(self):
+    @with_generator('emptygen')
+    def test_empty(self, emptygen):
         try:
             next(gentools.imap_return(str, emptygen()))
         except StopIteration as e:
-            assert e.args[0] == '99'
+            assert e.value == '99'
 
-    def test_simple(self):
+    @with_generator('mymax')
+    def test_simple(self, mymax):
         mapped = gentools.imap_return(str, mymax(4))
 
         assert next(mapped) == 4
@@ -220,7 +226,8 @@ class TestIMapReturn:
         assert mapped.send(4) == 7
         assert gentools.sendreturn(mapped, 104) == '312'
 
-    def test_any_iterable(self):
+    @with_generator('MyMax')
+    def test_any_iterable(self, MyMax):
         mapped = gentools.imap_return(str, MyMax(4))
 
         assert next(mapped) == 4
@@ -231,13 +238,17 @@ class TestIMapReturn:
 
 class TestIRelay:
 
-    def test_empty(self):
+    @with_generator('emptygen')
+    @with_generator('try_until_positive')
+    def test_empty(self, emptygen, try_until_positive):
         try:
             next(gentools.irelay(emptygen(), try_until_positive))
         except StopIteration as e:
-            assert e.args[0] == 99
+            assert e.value == 99
 
-    def test_simple(self):
+    @with_generator('mymax')
+    @with_generator('try_until_positive')
+    def test_simple(self, mymax, try_until_positive):
         relayed = gentools.irelay(mymax(4), try_until_positive)
 
         assert next(relayed) == 4
@@ -248,7 +259,9 @@ class TestIRelay:
         assert relayed.send(0) == 7
         assert gentools.sendreturn(relayed, 102) == 306
 
-    def test_any_iterable(self):
+    @with_generator('MyMax')
+    @with_generator('try_until_positive')
+    def test_any_iterable(self, MyMax, try_until_positive):
         relayed = gentools.irelay(MyMax(4), try_until_positive)
 
         assert next(relayed) == 4
@@ -259,7 +272,10 @@ class TestIRelay:
         assert relayed.send(0) == 7
         assert gentools.sendreturn(relayed, 102) == 306
 
-    def test_accumulate(self):
+    @with_generator('mymax')
+    @with_generator('try_until_positive')
+    @with_generator('try_until_even')
+    def test_accumulate(self, try_until_even, try_until_positive, mymax):
 
         gen = reduce(gentools.irelay,
                      [try_until_even, try_until_positive],
@@ -272,7 +288,9 @@ class TestIRelay:
         assert gentools.sendreturn(gen, 110) == 330
 
 
-def test_combine_mappers():
+@with_generator('mymax')
+@with_generator('try_until_even')
+def test_combine_mappers(mymax, try_until_even):
 
     gen = gentools.imap_return(
         'result: {}'.format,
@@ -303,7 +321,10 @@ def test_oneyield():
     assert gentools.sendreturn(gen, 9) == 9
 
 
-def test_relay():
+@with_generator('mymax')
+@with_generator('try_until_even')
+@with_generator('try_until_positive')
+def test_relay(mymax, try_until_even, try_until_positive):
     decorated = gentools.relay(try_until_even, try_until_positive)(mymax)
 
     gen = decorated(4)
@@ -315,7 +336,8 @@ def test_relay():
     assert gentools.sendreturn(gen, 102) == 306
 
 
-def test_map_yield():
+@with_generator('mymax')
+def test_map_yield(mymax):
     decorated = gentools.map_yield(str, lambda x: x * 2)(mymax)
 
     gen = decorated(5)
@@ -326,7 +348,8 @@ def test_map_yield():
     assert gentools.sendreturn(gen, 103) == 309
 
 
-def test_map_send():
+@with_generator('mymax')
+def test_map_send(mymax):
     decorated = gentools.map_send(lambda x: x * 2, int)(mymax)
 
     gen = decorated(5)
@@ -336,7 +359,8 @@ def test_map_send():
     assert gentools.sendreturn(gen, '103') == 618
 
 
-def test_map_return():
+@with_generator('mymax')
+def test_map_return(mymax):
     decorated = gentools.map_return(lambda s: s.center(5), str)(mymax)
     gen = decorated(5)
     assert next(gen) == 5
@@ -344,7 +368,9 @@ def test_map_return():
     assert gentools.sendreturn(gen, 103) == ' 309 '
 
 
-def test_combining_decorators():
+@with_generator('mymax')
+@with_generator('try_until_even')
+def test_combining_decorators(mymax, try_until_even):
     decorators = compose(
         gentools.map_return('result: {}'.format),
         gentools.map_send(int),
