@@ -39,6 +39,20 @@ def mygen(a, foo):
     yield foo
 
 
+class TestYieldingFrom:
+
+    @with_generator('delegator')
+    @with_generator('mymax')
+    def test_simple(self, delegator, mymax):
+
+        gen = delegator(mymax, 4)
+
+        assert next(gen) == 4
+        assert gen.send(7) == 7
+        assert gen.send(3) == 7
+        assert gentools.sendreturn(gen, 103) == 309
+
+
 class TestReusable:
 
     @pytest.mark.skipif(sys.version_info < (3, 5),
