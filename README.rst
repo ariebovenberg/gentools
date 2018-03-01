@@ -25,6 +25,10 @@ Gentools
 
 Tools for generators, generator functions, and generator-based coroutines.
 
+* Create reusable generators
+* Python2/3-compatible generator return
+* ``yield from`` for python 2
+
 Installation
 ------------
 
