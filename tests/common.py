@@ -1,5 +1,26 @@
 """py2/3-compatible defined generators"""
-from gentools import py2_compatible, return_
+from gentools import py2_compatible, return_, yield_from
+
+
+@py2_compatible
+def oneway_delegator(gen):
+    yielder = yield_from(gen)
+    for item in yielder:
+        with yielder:
+            yield item
+    return_(yielder._result)
+
+
+@py2_compatible
+def delegator(gen):
+    yielder = yield_from(gen)
+    for item in yielder:
+        try:
+            with yielder:
+                yielder.send((yield item))
+        except GeneratorExit:
+            return_('exiting...')
+    return_(yielder._result)
 
 
 @py2_compatible
@@ -39,7 +60,9 @@ def mymax(val):
         except GeneratorExit:
             return_('mymax: closed')
         except ValueError:
-            yield 'caught ValueError'
+            sent = yield 'caught ValueError'
+        except TypeError:
+            return_('mymax: type error')
         if sent > val:
             val = sent
     return_(val * 3)

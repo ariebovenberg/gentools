@@ -1,6 +1,17 @@
 """only python3-compatible generators"""
 
 
+def oneway_delegator(gen):
+    return (yield from gen)
+
+
+def delegator(gen):
+    try:
+        return (yield from gen)
+    except GeneratorExit:
+        return 'exiting...'
+
+
 def try_until_positive(req):
     """an example relay"""
     response = yield req
@@ -35,7 +46,9 @@ def mymax(val):
         except GeneratorExit:
             return ('mymax: closed')
         except ValueError:
-            yield 'caught ValueError'
+            sent = yield 'caught ValueError'
+        except TypeError:
+            return 'mymax: type error'
         if sent > val:
             val = sent
     return val * 3

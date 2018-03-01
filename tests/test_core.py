@@ -39,13 +39,90 @@ def mygen(a, foo):
     yield foo
 
 
-class TestYieldingFrom:
+class TestYieldFrom:
+
+    @with_generator('delegator')
+    def test_throw_oneway(self, delegator):
+
+        gen = delegator(iter([1, 2, 3]))
+
+        assert next(gen) == 1
+        assert next(gen) == 2
+        with pytest.raises(ValueError):
+            assert gen.throw(ValueError)
+
+    @with_generator('delegator')
+    @with_generator('mymax')
+    def test_throw_returns(self, delegator, mymax):
+
+        gen = delegator(mymax(4))
+
+        assert next(gen) == 4
+        assert gen.send(7) == 7
+        assert gen.send(3) == 7
+        try:
+            assert gen.throw(TypeError)
+        except StopIteration as e:
+            result = e.args[0]
+        else:
+            raise RuntimeError('generator did not return')
+
+        assert result == 'mymax: type error'
+
+    @with_generator('delegator')
+    @with_generator('mymax')
+    def test_throw_continues(self, delegator, mymax):
+
+        gen = delegator(mymax(4))
+
+        assert next(gen) == 4
+        assert gen.send(7) == 7
+        assert gen.send(3) == 7
+        assert gen.throw(ValueError) == 'caught ValueError'
+        assert gentools.sendreturn(gen, 104) == 312
+
+    @with_generator('delegator')
+    def test_close_oneway(self, delegator):
+
+        gen = delegator(iter([1, 2, 3]))
+
+        assert next(gen) == 1
+        assert next(gen) == 2
+        assert gen.close() is None
+
+    @with_generator('delegator')
+    @with_generator('mymax')
+    def test_close(self, delegator, mymax):
+
+        gen = delegator(mymax(4))
+
+        assert next(gen) == 4
+        assert gen.send(7) == 7
+        assert gen.send(3) == 7
+        assert gen.close() is None
+
+    @with_generator('oneway_delegator')
+    def test_oneway(self, oneway_delegator):
+
+        gen = oneway_delegator(iter([1, 2, 3]))
+
+        assert next(gen) == 1
+        assert next(gen) == 2
+        assert next(gen) == 3
+        assert gentools.sendreturn(gen, None) is None
+
+    @with_generator('delegator')
+    @with_generator('emptygen')
+    def test_empty(self, delegator, emptygen):
+
+        gen = delegator(emptygen())
+        assert gentools.sendreturn(gen, None) == 99
 
     @with_generator('delegator')
     @with_generator('mymax')
     def test_simple(self, delegator, mymax):
 
-        gen = delegator(mymax, 4)
+        gen = delegator(mymax(4))
 
         assert next(gen) == 4
         assert gen.send(7) == 7
@@ -182,7 +259,7 @@ class TestIMapYield:
         try:
             next(gentools.imap_yield(str, emptygen()))
         except StopIteration as e:
-            assert e.value == 99
+            assert e.args[0] == 99
 
     @with_generator('mymax')
     def test_simple(self, mymax):
@@ -201,7 +278,7 @@ class TestIMapSend:
         try:
             next(gentools.imap_send(int, emptygen()))
         except StopIteration as e:
-            assert e.value == 99
+            assert e.args[0] == 99
 
     @with_generator('mymax')
     def test_simple(self, mymax):
@@ -229,7 +306,7 @@ class TestIMapReturn:
         try:
             next(gentools.imap_return(str, emptygen()))
         except StopIteration as e:
-            assert e.value == '99'
+            assert e.args[0] == '99'
 
     @with_generator('mymax')
     def test_simple(self, mymax):
@@ -258,7 +335,7 @@ class TestIRelay:
         try:
             next(gentools.irelay(emptygen(), try_until_positive))
         except StopIteration as e:
-            assert e.value == 99
+            assert e.args[0] == 99
 
     @with_generator('mymax')
     @with_generator('try_until_positive')

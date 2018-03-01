@@ -126,9 +126,7 @@ class _catch_genreturn(object):
 
     def __exit__(self, exc_type, exc, tb):
         if exc_type and issubclass(exc_type, GeneratorReturn):
-            new_exc = StopIteration(exc.args[0])
-            new_exc.value = exc.args[0]
-            raise new_exc
+            raise StopIteration(exc.args[0])
 
 
 catch_genreturn = _catch_genreturn()
@@ -156,17 +154,22 @@ class GeneratorProxy(object):
         with catch_genreturn:
             return self._gen.send(value)
 
-    if PY2:  # pragma: no cover
-        def next(self):
-            with catch_genreturn:
-                return next(self._gen)
-    else:
-        def __next__(self):
-            with catch_genreturn:
-                return next(self._gen)
+    def __next__(self):
+        with catch_genreturn:
+            return next(self._gen)
 
-    close = property(attrgetter('_gen.close'))
-    throw = property(attrgetter('_gen.throw'))
+    if PY2:  # pragma: no cover
+        next = __next__
+
+    def close(self):
+        try:
+            self._gen.close()
+        except GeneratorReturn as e:
+            pass
+
+    def throw(self, *args):
+        with catch_genreturn:
+            return self._gen.throw(*args)
 
 
 @add_metaclass(ReusableGeneratorMeta)

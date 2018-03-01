@@ -25,6 +25,7 @@ __all__ = [
 
     'py2_compatible',
     'return_',
+    'yield_from',
 ]
 
 
@@ -135,6 +136,75 @@ class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
         return_((yield self.__wrapped__(*args, **kwargs)))
 
 
+def stopiteration_value(exc):
+    try:
+        return exc.args[0]
+    except IndexError:
+        return
+
+
+class yield_from(object):
+
+    def __init__(self, gen):
+        self._finished = False
+        self._gen = iter(gen)
+        try:
+            self._next = next(self._gen)
+        except StopIteration as e:
+            self._result = stopiteration_value(e)
+            self._finished = True
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._finished:
+            raise StopIteration()
+        self._sent = None
+        return self._next
+
+    if PY2:  # pragma: no cover
+        next = __next__
+
+    def send(self, value):
+        self._sent = value
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_cls, exc, tb):
+        if exc_cls is None:
+            try:
+                if self._sent is None:
+                    self._next = next(self._gen)
+                else:
+                    self._next = self._gen.send(self._sent)
+            except StopIteration as _e:
+                self._finished = True
+                self._result = stopiteration_value(_e)
+        elif issubclass(exc_cls, GeneratorExit):
+            try:
+                close = self._gen.close
+            except AttributeError:
+                pass
+            else:
+                close()
+            raise exc
+        else:
+            _x = (exc_cls, exc, tb)
+            try:
+                throw = self._gen.throw
+            except AttributeError:
+                raise exc
+            else:
+                try:
+                    self._next = throw(*_x)
+                except StopIteration as _e:
+                    self._finished = True
+                    self._result = stopiteration_value(_e)
+                return True
+
+
 def sendreturn(gen, value):
     """Send an item into a generator expecting a final return value
 
@@ -158,7 +228,7 @@ def sendreturn(gen, value):
     try:
         gen.send(value)
     except StopIteration as e:
-        return e.value
+        return stopiteration_value(e)
     else:
         raise RuntimeError('generator did not return as expected')
 
