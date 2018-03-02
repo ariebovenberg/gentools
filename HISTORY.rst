@@ -4,7 +4,7 @@ Release history
 development
 +++++++++++
 
-1.1.0 (2018-02-??)
+1.1.0 (2018-03-02)
 ++++++++++++++++++
 
 - added support for python 2.7, 3.3
