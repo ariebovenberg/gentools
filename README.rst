@@ -1,25 +1,25 @@
 Gentools
 ========
 
-.. image:: https://img.shields.io/pypi/v/gentools.svg
+.. image:: https://img.shields.io/pypi/v/gentools.svg?style=flat-square
     :target: https://pypi.python.org/pypi/gentools
 
-.. image:: https://img.shields.io/pypi/l/gentools.svg
+.. image:: https://img.shields.io/pypi/l/gentools.svg?style=flat-square
     :target: https://pypi.python.org/pypi/gentools
 
-.. image:: https://img.shields.io/pypi/pyversions/gentools.svg
+.. image:: https://img.shields.io/pypi/pyversions/gentools.svg?style=flat-square
     :target: https://pypi.python.org/pypi/gentools
 
-.. image:: https://img.shields.io/travis/ariebovenberg/gentools.svg
+.. image:: https://img.shields.io/travis/ariebovenberg/gentools.svg?style=flat-square
     :target: https://travis-ci.org/ariebovenberg/gentools
 
-.. image:: https://img.shields.io/codecov/c/github/ariebovenberg/gentools.svg
+.. image:: https://img.shields.io/codecov/c/github/ariebovenberg/gentools.svg?style=flat-square
     :target: https://coveralls.io/github/ariebovenberg/gentools?branch=master
 
-.. image:: https://img.shields.io/readthedocs/gentools.svg
+.. image:: https://img.shields.io/readthedocs/gentools.svg?style=flat-square
     :target: http://gentools.readthedocs.io/en/latest/?badge=latest
 
-.. image:: https://img.shields.io/codeclimate/maintainability/ariebovenberg/gentools.svg
+.. image:: https://img.shields.io/codeclimate/maintainability/ariebovenberg/gentools.svg?style=flat-square
     :target: https://codeclimate.com/github/ariebovenberg/gentools/maintainability
 
 

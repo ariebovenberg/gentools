@@ -77,6 +77,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 html_theme = 'alabaster'
 
+pygments_style = 'friendly'
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -90,9 +92,11 @@ html_theme_options = {
     'github_repo': 'gentools',
     'github_banner': True,
     'github_type': 'star',
+    'fixed_sidebar': True,
     'warn_bg': '#FFC',
     'warn_border': '#EEE',
     'code_font_size': '0.8em',
+    'pre_bg': '#e8f4f9',
 }
 
 
