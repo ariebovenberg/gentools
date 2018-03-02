@@ -125,20 +125,10 @@ class _catch_genreturn_context(object):
 
     def __exit__(self, exc_type, exc, tb):
         if exc_type and issubclass(exc_type, GeneratorReturn):
-            raise Py23CompatibleStopIteration(exc.args[0])
+            raise StopIteration(exc.args[0])
 
 
 _catch_genreturn = _catch_genreturn_context()
-
-
-class Py23CompatibleStopIteration(StopIteration):
-
-    def __init__(self, *args):
-        if len(args) > 0:
-            self.value = args[0]
-        else:
-            self.value = None
-        Exception.__init__(self, *args)
 
 
 class GeneratorProxy(object):
