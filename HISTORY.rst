@@ -8,6 +8,7 @@ development
 ++++++++++++++++++
 
 - python2 support
+- implement ``yield_from`` helper
 - improvements to documentation
 
 1.0.2 (2018-02-08)
