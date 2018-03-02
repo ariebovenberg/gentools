@@ -261,6 +261,7 @@ def sendreturn(gen, value):
         raise RuntimeError('generator did not return as expected')
 
 
+@py2_compatible
 def imap_yield(func, gen):
     """Apply a function to all ``yield`` values of a generator
 
@@ -278,11 +279,14 @@ def imap_yield(func, gen):
     """
     gen = iter(gen)
     assert _is_just_started(gen)
-    item = next(gen)
-    while True:
-        item = gen.send((yield func(item)))
+    yielder = yield_from(gen)
+    for item in yielder:
+        with yielder:
+            yielder.send((yield func(item)))
+    return_(yielder.result)
 
 
+@py2_compatible
 def imap_send(func, gen):
     """Apply a function to all ``send`` values of a generator
 
@@ -300,9 +304,11 @@ def imap_send(func, gen):
     """
     gen = iter(gen)
     assert _is_just_started(gen)
-    item = next(gen)
-    while True:
-        item = gen.send(func((yield item)))
+    yielder = yield_from(gen)
+    for item in yielder:
+        with yielder:
+            yielder.send(func((yield item)))
+    return_(yielder.result)
 
 
 @py2_compatible
@@ -322,21 +328,14 @@ def imap_return(func, gen):
     """
     gen = iter(gen)
     assert _is_just_started(gen)
-    # this is basically:
-    #     return func((yield from gen))
-    # but without yield from
-    # (and very rudimentary)
-    try:
-        r = yield next(gen)
-    except StopIteration as e:
-        return_(func(e.args[0]))
-    while True:
-        try:
-            r = yield gen.send(r)
-        except StopIteration as e:
-            return_(func(e.args[0]))
+    yielder = yield_from(gen)
+    for item in yielder:
+        with yielder:
+            yielder.send((yield item))
+    return_(func(yielder.result))
 
 
+@py2_compatible
 def irelay(gen, thru):
     """Create a new generator by relaying yield/send interactions
     through another generator
@@ -355,52 +354,20 @@ def irelay(gen, thru):
     """
     gen = iter(gen)
     assert _is_just_started(gen)
-    item = next(gen)
-    while True:
-        # the following is basically:
-        #     sent = yield from thru(item)
-        # but without yield from
-        _i = iter(thru(item))
-        try:
-            _y = next(_i)
-        except StopIteration as _e:  # pragma: no cover
-            _r = _e.args[0]
-        else:  # pragma: no cover
-            while 1:
-                try:
-                    _s = yield _y
-                except GeneratorExit as _e:
-                    try:
-                        _m = _i.close
-                    except AttributeError:
-                        pass
-                    else:
-                        _m()
-                    raise _e
-                except BaseException as _e:
-                    _x = sys.exc_info()
-                    try:
-                        _m = _i.throw
-                    except AttributeError:
-                        raise _e
-                    else:
-                        try:
-                            _y = _m(*_x)
-                        except StopIteration as _e:
-                            _r = _e.args[0]
-                            break
-                else:
-                    try:
-                        if _s is None:
-                            _y = next(_i)
-                        else:
-                            _y = _i.send(_s)
-                    except StopIteration as _e:
-                        _r = _e.args[0]
-                        break
-        sent = _r
-        # --- end yield from ---
-        item = gen.send(sent)
+
+    yielder = yield_from(gen)
+    for item in yielder:
+        with yielder:
+
+            subgen = thru(item)
+            subyielder = yield_from(subgen)
+            for subitem in subyielder:
+                with subyielder:
+                    subyielder.send((yield subitem))
+
+            yielder.send(subyielder.result)
+
+    return_(yielder.result)
 
 
 class map_yield:
