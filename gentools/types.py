@@ -5,7 +5,6 @@ import sys
 import typing as t
 from collections import OrderedDict
 from itertools import starmap
-from operator import attrgetter
 
 from .utils import PY2, CallableAsMethod
 
