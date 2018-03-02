@@ -8,7 +8,7 @@ def oneway_delegator(gen):
     for item in yielder:
         with yielder:
             yield item
-    return_(yielder._result)
+    return_(yielder.result)
 
 
 @py2_compatible
@@ -20,7 +20,7 @@ def delegator(gen):
                 yielder.send((yield item))
         except GeneratorExit:
             return_('exiting...')
-    return_(yielder._result)
+    return_(yielder.result)
 
 
 @py2_compatible

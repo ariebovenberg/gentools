@@ -11,15 +11,15 @@ __all__ = [
     'oneyield',
     'sendreturn',
 
-    'imap_yield',
-    'imap_send',
-    'imap_return',
-    'irelay',
-
     'relay',
     'map_yield',
     'map_send',
     'map_return',
+
+    'imap_yield',
+    'imap_send',
+    'imap_return',
+    'irelay',
 
     'compose',
 
@@ -74,6 +74,10 @@ def py2_compatible(func):
     it is not an strict generator instance.
     For most purposes (e.g. ``yield from``) it works fine,
     but :func:`~inspect.isgenerator` will return ``False``.
+
+    See also
+    --------
+    `PEP 479 <https://www.python.org/dev/peps/pep-0479/>`_
     """
     return compose(GeneratorProxy, func)
 
@@ -136,7 +140,7 @@ class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
         return_((yield self.__wrapped__(*args, **kwargs)))
 
 
-def stopiteration_value(exc):
+def stopiter_value(exc):
     try:
         return exc.args[0]
     except IndexError:
@@ -144,6 +148,29 @@ def stopiteration_value(exc):
 
 
 class yield_from(object):
+    """Use this class to build python2/3-compatible ``yield from``-patterns
+
+    Example
+    -------
+
+    >>> @py2_compatible
+    ... def delegator(gen):
+    ...     yielder = yield_from(gen)
+    ...     for item in yielder:
+    ...         with yielder:
+    ...             yielder.send((yield item))
+    ...     return_(yielder.result)
+
+    is equivalent to:
+
+    >>> def delegator(gen)
+    ...     return (yield from gen)
+
+    See also
+    --------
+    `PEP 380 <https://www.python.org/dev/peps/pep-0380/#formal-semantics>`_
+    """
+    __slots__ = ('result', '_finished', '_gen', '_sent', '_next')
 
     def __init__(self, gen):
         self._finished = False
@@ -151,7 +178,7 @@ class yield_from(object):
         try:
             self._next = next(self._gen)
         except StopIteration as e:
-            self._result = stopiteration_value(e)
+            self.result = stopiter_value(e)
             self._finished = True
 
     def __iter__(self):
@@ -181,7 +208,7 @@ class yield_from(object):
                     self._next = self._gen.send(self._sent)
             except StopIteration as _e:
                 self._finished = True
-                self._result = stopiteration_value(_e)
+                self.result = stopiter_value(_e)
         elif issubclass(exc_cls, GeneratorExit):
             try:
                 close = self._gen.close
@@ -201,7 +228,7 @@ class yield_from(object):
                     self._next = throw(*_x)
                 except StopIteration as _e:
                     self._finished = True
-                    self._result = stopiteration_value(_e)
+                    self.result = stopiter_value(_e)
                 return True
 
 
@@ -228,7 +255,7 @@ def sendreturn(gen, value):
     try:
         gen.send(value)
     except StopIteration as e:
-        return stopiteration_value(e)
+        return stopiter_value(e)
     else:
         raise RuntimeError('generator did not return as expected')
 

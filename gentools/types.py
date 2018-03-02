@@ -26,7 +26,6 @@ if PY2:  # pragma: no cover
         yield
     GeneratorType = type(__())
     del __
-
 else:
     from inspect import _empty, _VAR_POSITIONAL, _VAR_KEYWORD
     from types import GeneratorType
@@ -101,8 +100,8 @@ class ReusableGeneratorMeta(CallableAsMethod, type(Generable)):
     pass
 
 
-# copied from ``six.add_metaclass``
-def add_metaclass(metaclass):  # pragma: no cover
+# from ``six.add_metaclass``
+def _add_metaclass(metaclass):  # pragma: no cover
     """Class decorator for creating a class with a metaclass."""
     def wrapper(cls):
         orig_vars = cls.__dict__.copy()
@@ -118,7 +117,7 @@ def add_metaclass(metaclass):  # pragma: no cover
     return wrapper
 
 
-class _catch_genreturn(object):
+class _catch_genreturn_context(object):
     __slots__ = ()
 
     def __enter__(self):
@@ -126,10 +125,20 @@ class _catch_genreturn(object):
 
     def __exit__(self, exc_type, exc, tb):
         if exc_type and issubclass(exc_type, GeneratorReturn):
-            raise StopIteration(exc.args[0])
+            raise Py23CompatibleStopIteration(exc.args[0])
 
 
-catch_genreturn = _catch_genreturn()
+_catch_genreturn = _catch_genreturn_context()
+
+
+class Py23CompatibleStopIteration(StopIteration):
+
+    def __init__(self, *args):
+        if len(args) > 0:
+            self.value = args[0]
+        else:
+            self.value = None
+        Exception.__init__(self, *args)
 
 
 class GeneratorProxy(object):
@@ -151,11 +160,11 @@ class GeneratorProxy(object):
         return self
 
     def send(self, value):
-        with catch_genreturn:
+        with _catch_genreturn:
             return self._gen.send(value)
 
     def __next__(self):
-        with catch_genreturn:
+        with _catch_genreturn:
             return next(self._gen)
 
     if PY2:  # pragma: no cover
@@ -168,13 +177,13 @@ class GeneratorProxy(object):
             pass
 
     def throw(self, *args):
-        with catch_genreturn:
+        with _catch_genreturn:
             return self._gen.throw(*args)
 
     __del__ = close
 
 
-@add_metaclass(ReusableGeneratorMeta)
+@_add_metaclass(ReusableGeneratorMeta)
 class ReusableGenerator(Generable[T_yield, T_send, T_return]):
     """base class for reusable generator functions
 
