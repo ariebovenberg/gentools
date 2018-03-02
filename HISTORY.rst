@@ -8,8 +8,7 @@ development
 ++++++++++++++++++
 
 - added support for python 2.7, 3.3
-- new ``py2_compatible`` decorator
-- new ``yield_from`` helper
+- new ``py2_compatible`` decorator with py2/3 compatible ``return_``
 - new ``stopiter_value`` helper
 - improvements to documentation
 
