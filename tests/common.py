@@ -1,5 +1,6 @@
 """py2/3-compatible defined generators"""
-from gentools import py2_compatible, return_, yield_from
+from gentools import py2_compatible, return_
+from gentools.core import yield_from
 
 
 @py2_compatible
