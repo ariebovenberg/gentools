@@ -1,31 +1,35 @@
 Gentools
 ========
 
-.. image:: https://img.shields.io/pypi/v/gentools.svg
+.. image:: https://img.shields.io/pypi/v/gentools.svg?style=flat-square
     :target: https://pypi.python.org/pypi/gentools
 
-.. image:: https://img.shields.io/pypi/l/gentools.svg
+.. image:: https://img.shields.io/pypi/l/gentools.svg?style=flat-square
     :target: https://pypi.python.org/pypi/gentools
 
-.. image:: https://img.shields.io/pypi/pyversions/gentools.svg
+.. image:: https://img.shields.io/pypi/pyversions/gentools.svg?style=flat-square
     :target: https://pypi.python.org/pypi/gentools
 
-.. image:: https://travis-ci.org/ariebovenberg/gentools.svg?branch=master
+.. image:: https://img.shields.io/travis/ariebovenberg/gentools.svg?style=flat-square
     :target: https://travis-ci.org/ariebovenberg/gentools
 
-.. image:: https://coveralls.io/repos/github/ariebovenberg/gentools/badge.svg?branch=master
+.. image:: https://img.shields.io/codecov/c/github/ariebovenberg/gentools.svg?style=flat-square
     :target: https://coveralls.io/github/ariebovenberg/gentools?branch=master
 
-.. image:: https://readthedocs.org/projects/gentools/badge/?version=latest
+.. image:: https://img.shields.io/readthedocs/gentools.svg?style=flat-square
     :target: http://gentools.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
 
-.. image:: https://api.codeclimate.com/v1/badges/a4879e2c20282c1ac386/maintainability
+.. image:: https://img.shields.io/codeclimate/maintainability/ariebovenberg/gentools.svg?style=flat-square
     :target: https://codeclimate.com/github/ariebovenberg/gentools/maintainability
-    :alt: Maintainability
 
 
 Tools for generators, generator functions, and generator-based coroutines.
+
+Key features:
+
+* Create reusable generators
+* Compose generators
+* Build python 2/3-compatible generators with ``return``.
 
 Installation
 ------------
@@ -110,3 +114,15 @@ Examples
    8
    >>> gen.send(104)
    StopIteration(104)
+
+- make python 2/3 compatible generators with ``return``.
+
+.. code-block:: python
+
+   >>> @py2_compatible
+   ... def my_max(value):
+   ...     while value < 100:
+   ...         newvalue = yield value
+   ...         if newvalue > value:
+   ...             value = newvalue
+   ...     return_(value)

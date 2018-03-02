@@ -37,8 +37,6 @@ import gentools  # noqa
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.napoleon',
-              'alabaster',
-              'sphinx_autodoc_typehints',
               'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -79,6 +77,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 html_theme = 'alabaster'
 
+pygments_style = 'friendly'
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -92,15 +92,16 @@ html_theme_options = {
     'github_repo': 'gentools',
     'github_banner': True,
     'github_type': 'star',
+    'fixed_sidebar': True,
     'warn_bg': '#FFC',
     'warn_border': '#EEE',
     'code_font_size': '0.8em',
+    'pre_bg': '#e8f4f9',
 }
 
 
 html_sidebars = {
-    '**': ['about.html',
-           'localtoc.html', 'relations.html', 'searchbox.html']
+    '**': ['about.html', 'navigation.html', 'searchbox.html']
 }
 
 intersphinx_mapping = {

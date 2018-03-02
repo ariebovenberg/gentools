@@ -4,6 +4,14 @@ Release history
 development
 +++++++++++
 
+1.1.0 (2018-03-02)
+++++++++++++++++++
+
+- added support for python 2.7, 3.3
+- new ``py2_compatible`` decorator with py2/3 compatible ``return_``
+- new ``stopiter_value`` helper
+- improvements to documentation
+
 1.0.2 (2018-02-08)
 ++++++++++++++++++
 
