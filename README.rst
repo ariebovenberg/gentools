@@ -29,7 +29,7 @@ Key features:
 
 * Create reusable generators
 * Compose generators
-* Build python 2/3-compatible generators with ``return`` and ``yield_from``.
+* Build python 2/3-compatible generators with ``return``.
 
 Installation
 ------------
@@ -126,19 +126,3 @@ Examples
    ...         if newvalue > value:
    ...             value = newvalue
    ...     return_(value)
-
-- a python 2/3-compatible ``yield from``
-
-.. code-block:: python
-
-   >>> def my_max(value):
-   ...     while value < 100:
-   ...         newvalue = yield value
-   ...         if newvalue > value:
-   ...             value = newvalue
-
-   >>> def delegator(gen):
-   ...     yielder = yield_from(gen)
-   ...     for item in yielder:
-   ...         with yielder:
-   ...             yielder.send((yield item))

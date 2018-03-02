@@ -18,7 +18,6 @@ __all__ = [
 
     'py2_compatible',
     'return_',
-    'yield_from',
 
     'compose',
     'stopiter_value',
