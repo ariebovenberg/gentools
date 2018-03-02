@@ -2,8 +2,8 @@ import sys
 from functools import partial, reduce
 from operator import attrgetter, itemgetter
 
-from .types import (GeneratorCallable, GeneratorProxy, GeneratorReturn,
-                    ReusableGenerator, T_send, T_yield)
+from .types import (GeneratorCallable, ReusableGenerator, GeneratorType,
+                    T_send, T_yield)
 from .utils import PY2, compose
 
 __all__ = [
@@ -38,6 +38,10 @@ else:
 
 def _is_just_started(gen):
     return gen.gi_frame.f_lasti == -1
+
+
+class GeneratorReturn(BaseException):
+    pass
 
 
 def py2_compatible(func):
@@ -81,6 +85,62 @@ def py2_compatible(func):
     `PEP 479 <https://www.python.org/dev/peps/pep-0479/>`_
     """
     return compose(GeneratorProxy, func)
+
+
+class _catch_genreturn_context(object):
+    __slots__ = ()
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc, tb):
+        if exc_type and issubclass(exc_type, GeneratorReturn):
+            raise StopIteration(exc.args[0])
+
+
+_catch_genreturn = _catch_genreturn_context()
+
+
+class GeneratorProxy(object):
+    """a python2&3-compatible generator proxy
+
+    This is needed to provide a consistent way to "return" from a generator
+    """
+    __slots__ = '_gen'
+
+    def __init__(self, gen):
+        assert isinstance(gen, GeneratorType)
+        self._gen = gen
+
+    gi_running = property(attrgetter('_gen.gi_running'))
+    gi_frame = property(attrgetter('_gen.gi_frame'))
+    gi_code = property(attrgetter('_gen.gi_code'))
+
+    def __iter__(self):
+        return self
+
+    def send(self, value):
+        with _catch_genreturn:
+            return self._gen.send(value)
+
+    def __next__(self):
+        with _catch_genreturn:
+            return next(self._gen)
+
+    if PY2:  # pragma: no cover
+        next = __next__
+
+    def close(self):
+        try:
+            self._gen.close()
+        except GeneratorReturn as e:
+            pass
+
+    def throw(self, *args):
+        with _catch_genreturn:
+            return self._gen.throw(*args)
+
+    __del__ = close
 
 
 def return_(value):

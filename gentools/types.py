@@ -56,10 +56,6 @@ else:  # pragma: no cover
     _apply_defaults = inspect.BoundArguments.apply_defaults
 
 
-class GeneratorReturn(Exception):
-    pass
-
-
 class Generable(t.Generic[T_yield, T_send, T_return], t.Iterable[T_yield]):
     """ABC for generable objects.
     Any object where :meth:`~object.__iter__`
@@ -115,62 +111,6 @@ def _add_metaclass(metaclass):  # pragma: no cover
         orig_vars.pop('__weakref__', None)
         return metaclass(cls.__name__, cls.__bases__, orig_vars)
     return wrapper
-
-
-class _catch_genreturn_context(object):
-    __slots__ = ()
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc, tb):
-        if exc_type and issubclass(exc_type, GeneratorReturn):
-            raise StopIteration(exc.args[0])
-
-
-_catch_genreturn = _catch_genreturn_context()
-
-
-class GeneratorProxy(object):
-    """a python2&3-compatible generator proxy
-
-    This is needed to provide a consistent way to "return" from a generator
-    """
-    __slots__ = '_gen'
-
-    def __init__(self, gen):
-        assert isinstance(gen, GeneratorType)
-        self._gen = gen
-
-    gi_running = property(attrgetter('_gen.gi_running'))
-    gi_frame = property(attrgetter('_gen.gi_frame'))
-    gi_code = property(attrgetter('_gen.gi_code'))
-
-    def __iter__(self):
-        return self
-
-    def send(self, value):
-        with _catch_genreturn:
-            return self._gen.send(value)
-
-    def __next__(self):
-        with _catch_genreturn:
-            return next(self._gen)
-
-    if PY2:  # pragma: no cover
-        next = __next__
-
-    def close(self):
-        try:
-            self._gen.close()
-        except GeneratorReturn as e:
-            pass
-
-    def throw(self, *args):
-        with _catch_genreturn:
-            return self._gen.throw(*args)
-
-    __del__ = close
 
 
 @_add_metaclass(ReusableGeneratorMeta)
