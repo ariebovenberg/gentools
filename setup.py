@@ -1,3 +1,4 @@
+import sys
 import os.path
 from setuptools import setup, find_packages
 
@@ -14,6 +15,12 @@ exec(read_local_file('gentools/__about__.py'), metadata)
 readme = read_local_file('README.rst')
 history = read_local_file('HISTORY.rst')
 
+
+requires = []
+if sys.version_info < (3, 5):
+    requires.append('typing>=3.6.2')
+if sys.version_info < (3, 4):
+    requires.append('funcsigs>=1.0.2')
 
 setup(
     name='gentools',
@@ -40,10 +47,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    install_requires=[
-        'typing>=3.6.2;python_version<"3.5"',
-        'funcsigs>=1.0.2;python_version<"3.4"',
-    ],
+    install_requires=requires,
     keywords=['generators', 'itertools', 'coroutines'],
     python_requires='>=2.7',
     packages=find_packages(exclude=('tests', 'docs'))
