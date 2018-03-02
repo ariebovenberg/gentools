@@ -260,6 +260,8 @@ class yield_from(object):
         return self
 
     def __exit__(self, exc_cls, exc, tb):
+        # the following code is adapted from
+        # www.python.org/dev/peps/pep-0380/#formal-semantics
         if exc_cls is None:
             try:
                 if self._sent is None:
