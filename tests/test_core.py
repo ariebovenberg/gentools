@@ -7,7 +7,7 @@ import pytest
 
 import gentools
 from gentools import py2_compatible, return_
-from gentools.utils import compose, PY2
+from gentools.utils import PY2, compose
 
 from . import common
 

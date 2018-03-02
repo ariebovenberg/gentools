@@ -2,7 +2,7 @@ import sys
 from functools import partial, reduce
 from operator import attrgetter, itemgetter
 
-from .types import (GeneratorCallable, ReusableGenerator, GeneratorType,
+from .types import (GeneratorCallable, GeneratorType, ReusableGenerator,
                     T_send, T_yield)
 from .utils import PY2, compose
 
