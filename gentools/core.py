@@ -16,16 +16,17 @@ __all__ = [
     'map_send',
     'map_return',
 
+    'py2_compatible',
+    'return_',
+    'yield_from',
+
+    'compose',
+    'stopiter_value',
+
     'imap_yield',
     'imap_send',
     'imap_return',
     'irelay',
-
-    'compose',
-
-    'py2_compatible',
-    'return_',
-    'yield_from',
 ]
 
 

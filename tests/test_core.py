@@ -39,6 +39,11 @@ def mygen(a, foo):
     yield foo
 
 
+def test_stopiter_value():
+    assert gentools.stopiter_value(StopIteration()) is None
+    assert gentools.stopiter_value(StopIteration('foo')) == 'foo'
+
+
 class TestYieldFrom:
 
     @with_generator('delegator')

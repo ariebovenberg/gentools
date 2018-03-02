@@ -7,8 +7,10 @@ development
 1.1.0 (2018-02-??)
 ++++++++++++++++++
 
-- python2 support
-- implement ``yield_from`` helper
+- added support for python 2.7, 3.3
+- new ``py2_compatible`` decorator
+- new ``yield_from`` helper
+- new ``stopiter_value`` helper
 - improvements to documentation
 
 1.0.2 (2018-02-08)
