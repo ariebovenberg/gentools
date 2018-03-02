@@ -97,8 +97,7 @@ html_theme_options = {
 
 
 html_sidebars = {
-    '**': ['about.html',
-           'localtoc.html', 'relations.html', 'searchbox.html']
+    '**': ['about.html', 'navigation.html', 'searchbox.html']
 }
 
 intersphinx_mapping = {
