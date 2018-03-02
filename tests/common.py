@@ -19,7 +19,7 @@ def delegator(gen):
             with yielder:
                 yielder.send((yield item))
         except GeneratorExit:
-            return_('exiting...')
+            return
     return_(yielder.result)
 
 
@@ -31,7 +31,7 @@ def try_until_positive(req):
         try:
             response = yield 'NOT POSITIVE!'
         except GeneratorExit:
-            return_('positive: closed')
+            return
         except ValueError:
             yield 'caught ValueError'
     return_(response)
@@ -45,7 +45,7 @@ def try_until_even(req):
         try:
             response = yield 'NOT EVEN!'
         except GeneratorExit:
-            return_('even: closed')
+            return
         except ValueError:
             yield 'caught ValueError'
     return_(response)
@@ -58,7 +58,7 @@ def mymax(val):
         try:
             sent = yield val
         except GeneratorExit:
-            return_('mymax: closed')
+            return
         except ValueError:
             sent = yield 'caught ValueError'
         except TypeError:
@@ -81,7 +81,7 @@ class MyMax:
             try:
                 sent = yield val
             except GeneratorExit:
-                return_('mymax: closed')
+                return
             except ValueError:
                 yield 'caught ValueError'
             if sent > val:
