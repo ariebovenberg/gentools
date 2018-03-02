@@ -19,7 +19,7 @@ def delegator(gen):
             with yielder:
                 yielder.send((yield item))
         except GeneratorExit:
-            return
+            return_('foo')
     return_(yielder.result)
 
 
