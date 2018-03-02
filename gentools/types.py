@@ -171,6 +171,8 @@ class GeneratorProxy(object):
         with catch_genreturn:
             return self._gen.throw(*args)
 
+    __del__ = close
+
 
 @add_metaclass(ReusableGeneratorMeta)
 class ReusableGenerator(Generable[T_yield, T_send, T_return]):
