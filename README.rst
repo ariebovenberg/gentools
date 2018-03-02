@@ -25,9 +25,11 @@ Gentools
 
 Tools for generators, generator functions, and generator-based coroutines.
 
+Key features:
+
 * Create reusable generators
-* Python2/3-compatible generator return
-* ``yield from`` for python 2
+* Compose generators
+* Build python 2/3-compatible generators with ``return`` and ``yield_from``.
 
 Installation
 ------------
@@ -113,7 +115,7 @@ Examples
    >>> gen.send(104)
    StopIteration(104)
 
-- make python 2/3 compatible generators with ``return``
+- make python 2/3 compatible generators with ``return``.
 
 .. code-block:: python
 
@@ -124,3 +126,19 @@ Examples
    ...         if newvalue > value:
    ...             value = newvalue
    ...     return_(value)
+
+- a python 2/3-compatible ``yield from``
+
+.. code-block:: python
+
+   >>> def my_max(value):
+   ...     while value < 100:
+   ...         newvalue = yield value
+   ...         if newvalue > value:
+   ...             value = newvalue
+
+   >>> def delegator(gen):
+   ...     yielder = yield_from(gen)
+   ...     for item in yielder:
+   ...         with yielder:
+   ...             yielder.send((yield item))
