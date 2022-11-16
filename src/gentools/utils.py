@@ -1,8 +1,5 @@
 """Miscellaneous tools, boilerplate, and shortcuts"""
-import sys
 from functools import partial
-
-PY2 = sys.version_info < (3, )
 
 
 def identity(obj):
@@ -11,6 +8,7 @@ def identity(obj):
 
 class CallableAsMethod(object):
     """mixin for callables to be callable as methods when bound to a class"""
+
     def __get__(self, obj, objtype=None):
         return self if obj is None else partial(self, obj)
 
@@ -27,6 +25,7 @@ class compose(CallableAsMethod):
     ----
     * if given no functions, acts as an identity function
     """
+
     def __init__(self, *funcs):
         self.funcs = funcs
         self.__wrapped__ = funcs[-1] if funcs else identity

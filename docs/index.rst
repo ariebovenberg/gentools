@@ -12,7 +12,7 @@
 
    api.rst
 
-.. include:: ../HISTORY.rst
+.. include:: ../CHANGELOG.rst
 
 
 Indices and tables

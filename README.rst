@@ -19,9 +19,6 @@ Gentools
 .. image:: https://img.shields.io/readthedocs/gentools.svg?style=flat-square
     :target: http://gentools.readthedocs.io/en/latest/?badge=latest
 
-.. image:: https://img.shields.io/codeclimate/maintainability/ariebovenberg/gentools.svg?style=flat-square
-    :target: https://codeclimate.com/github/ariebovenberg/gentools/maintainability
-
 
 Tools for generators, generator functions, and generator-based coroutines.
 
@@ -29,7 +26,7 @@ Key features:
 
 * Create reusable generators
 * Compose generators
-* Build python 2/3-compatible generators with ``return``.
+* Build python 2/3-compatible generators (``gentools`` version <1.2 only)
 
 Installation
 ------------
@@ -115,7 +112,8 @@ Examples
    >>> gen.send(104)
    StopIteration(104)
 
-- make python 2/3 compatible generators with ``return``.
+- make python 2/3 compatible generators with ``return``. 
+  (`gentools` version <1.2 only)
 
 .. code-block:: python
 
