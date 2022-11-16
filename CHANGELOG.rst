@@ -4,7 +4,7 @@ Release history
 development
 +++++++++++
 
-1.2.0 (2022-11-??)
+1.2.0 (2022-11-16)
 ++++++++++++++++++
 
 - Update supported Python versions, docs theme.
