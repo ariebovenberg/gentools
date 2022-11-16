@@ -1,152 +1,28 @@
-import sys
 from functools import partial, reduce
+from inspect import getgeneratorstate, signature
 from operator import attrgetter, itemgetter
 
-from .types import (GeneratorCallable, GeneratorType, ReusableGenerator,
-                    T_send, T_yield)
-from .utils import PY2, compose
+from .types import GeneratorCallable, ReusableGenerator, T_send, T_yield
+from .utils import compose
 
 __all__ = [
-    'reusable',
-    'oneyield',
-    'sendreturn',
-
-    'relay',
-    'map_yield',
-    'map_send',
-    'map_return',
-
-    'py2_compatible',
-    'return_',
-
-    'compose',
-    'stopiter_value',
-
-    'imap_yield',
-    'imap_send',
-    'imap_return',
-    'irelay',
+    "reusable",
+    "oneyield",
+    "sendreturn",
+    "relay",
+    "map_yield",
+    "map_send",
+    "map_return",
+    "compose",
+    "imap_yield",
+    "imap_send",
+    "imap_return",
+    "irelay",
 ]
 
 
-if PY2:  # pragma: no cover
-    from funcsigs import signature
-else:
-    from inspect import signature
-
-
 def _is_just_started(gen):
-    return gen.gi_frame.f_lasti == -1
-
-
-class GeneratorReturn(BaseException):
-    pass
-
-
-def py2_compatible(func):
-    """Decorate a generator function to make it Python 2/3 compatible.
-    Use together with :func:`return_`.
-
-    Example
-    -------
-
-    >>> @py2_compatible
-    ... def my_max(value):
-    ...     while value < 100:
-    ...         newvalue = yield value
-    ...         if newvalue > value:
-    ...             value = newvalue
-    ...     return_(value)
-
-    is equivalent to:
-
-    >>> def my_max(value):
-    ...     while value < 100:
-    ...         newvalue = yield value
-    ...         if newvalue > value:
-    ...             value = newvalue
-    ...     return value
-
-    Note
-    ----
-    This is necessary because PEP479 makes it impossible to replace
-    ``return`` with ``raise StopIteration`` in newer python 3 versions.
-
-    Warning
-    -------
-    Although the wrapped generator acts like a generator,
-    it is not an strict generator instance.
-    For most purposes (e.g. ``yield from``) it works fine,
-    but :func:`~inspect.isgenerator` will return ``False``.
-
-    See also
-    --------
-    `PEP 479 <https://www.python.org/dev/peps/pep-0479/>`_
-    """
-    return compose(GeneratorProxy, func)
-
-
-class _catch_genreturn_context(object):
-    __slots__ = ()
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc, tb):
-        if exc_type and issubclass(exc_type, GeneratorReturn):
-            raise StopIteration(exc.args[0])
-
-
-_catch_genreturn = _catch_genreturn_context()
-
-
-class GeneratorProxy(object):
-    """a python2&3-compatible generator proxy
-
-    This is needed to provide a consistent way to "return" from a generator
-    """
-    __slots__ = '_gen'
-
-    def __init__(self, gen):
-        assert isinstance(gen, GeneratorType)
-        self._gen = gen
-
-    gi_running = property(attrgetter('_gen.gi_running'))
-    gi_frame = property(attrgetter('_gen.gi_frame'))
-    gi_code = property(attrgetter('_gen.gi_code'))
-
-    def __iter__(self):
-        return self
-
-    def send(self, value):
-        with _catch_genreturn:
-            return self._gen.send(value)
-
-    def __next__(self):
-        with _catch_genreturn:
-            return next(self._gen)
-
-    if PY2:  # pragma: no cover
-        next = __next__
-
-    def close(self):
-        try:
-            self._gen.close()
-        except GeneratorReturn as e:
-            pass
-
-    def throw(self, *args):
-        with _catch_genreturn:
-            return self._gen.throw(*args)
-
-    __del__ = close
-
-
-def return_(value):
-    """Python 2/3 compatible way to return a value from a generator
-
-    Use only with the :func:`py2_compatible` decorator"""
-    raise GeneratorReturn(value)
+    return getgeneratorstate(gen) == "GEN_CREATED"
 
 
 def reusable(func):
@@ -167,23 +43,33 @@ def reusable(func):
     """
     sig = signature(func)
     origin = func
-    while hasattr(origin, '__wrapped__'):
+    while hasattr(origin, "__wrapped__"):
         origin = origin.__wrapped__
     return type(
         origin.__name__,
-        (ReusableGenerator, ),
-        dict([
-            ('__doc__',       origin.__doc__),
-            ('__module__',    origin.__module__),
-            ('__signature__', sig),
-            ('__wrapped__',   staticmethod(func)),
-        ] + [
-            (name, property(compose(itemgetter(name),
-                                    attrgetter('_bound_args.arguments'))))
-            for name in sig.parameters
-        ] + ([
-            ('__qualname__',  origin.__qualname__),
-        ] if sys.version_info > (3, ) else [])))
+        (ReusableGenerator,),
+        dict(
+            [
+                ("__doc__", origin.__doc__),
+                ("__module__", origin.__module__),
+                ("__signature__", sig),
+                ("__wrapped__", staticmethod(func)),
+                ("__qualname__", origin.__qualname__),
+            ]
+            + [
+                (
+                    name,
+                    property(
+                        compose(
+                            itemgetter(name),
+                            attrgetter("_bound_args.arguments"),
+                        )
+                    ),
+                )
+                for name in sig.parameters
+            ]
+        ),
+    )
 
 
 class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
@@ -192,45 +78,16 @@ class oneyield(GeneratorCallable[T_yield, T_send, T_send]):
     The resulting generator yields the function's return value once,
     and then returns the value it is sent (with ``send()``).
     """
+
     def __init__(self, func):
         self.__wrapped__ = func
 
-    @py2_compatible
     def __call__(self, *args, **kwargs):
-        return_((yield self.__wrapped__(*args, **kwargs)))
+        return (yield self.__wrapped__(*args, **kwargs))
 
 
-def stopiter_value(exc):
-    try:
-        return exc.args[0]
-    except IndexError:
-        return
-
-
-class yield_from(object):
-    """Use this class to build python2/3-compatible ``yield from``-patterns
-
-    Example
-    -------
-
-    >>> @py2_compatible
-    ... def delegator(gen):
-    ...     yielder = yield_from(gen)
-    ...     for item in yielder:
-    ...         with yielder:
-    ...             yielder.send((yield item))
-    ...     return_(yielder.result)
-
-    is equivalent to:
-
-    >>> def delegator(gen)
-    ...     return (yield from gen)
-
-    See also
-    --------
-    `PEP 380 <https://www.python.org/dev/peps/pep-0380/#formal-semantics>`_
-    """
-    __slots__ = ('result', '_finished', '_gen', '_sent', '_next')
+class _raw_yield_from(object):
+    __slots__ = ("result", "_finished", "_gen", "_sent", "_next")
 
     def __init__(self, gen):
         self._finished = False
@@ -238,7 +95,7 @@ class yield_from(object):
         try:
             self._next = next(self._gen)
         except StopIteration as e:
-            self.result = stopiter_value(e)
+            self.result = e.value
             self._finished = True
 
     def __iter__(self):
@@ -249,9 +106,6 @@ class yield_from(object):
             raise StopIteration()
         self._sent = None
         return self._next
-
-    if PY2:  # pragma: no cover
-        next = __next__
 
     def send(self, value):
         self._sent = value
@@ -270,7 +124,7 @@ class yield_from(object):
                     self._next = self._gen.send(self._sent)
             except StopIteration as _e:
                 self._finished = True
-                self.result = stopiter_value(_e)
+                self.result = _e.value
         elif issubclass(exc_cls, GeneratorExit):
             try:
                 close = self._gen.close
@@ -290,7 +144,7 @@ class yield_from(object):
                     self._next = throw(*_x)
                 except StopIteration as _e:
                     self._finished = True
-                    self.result = stopiter_value(_e)
+                    self.result = _e.value
                 return True
 
 
@@ -317,12 +171,11 @@ def sendreturn(gen, value):
     try:
         gen.send(value)
     except StopIteration as e:
-        return stopiter_value(e)
+        return e.value
     else:
-        raise RuntimeError('generator did not return as expected')
+        raise RuntimeError("generator did not return as expected")
 
 
-@py2_compatible
 def imap_yield(func, gen):
     """Apply a function to all ``yield`` values of a generator
 
@@ -340,14 +193,13 @@ def imap_yield(func, gen):
     """
     gen = iter(gen)
     assert _is_just_started(gen)
-    yielder = yield_from(gen)
+    yielder = _raw_yield_from(gen)
     for item in yielder:
         with yielder:
             yielder.send((yield func(item)))
-    return_(yielder.result)
+    return yielder.result
 
 
-@py2_compatible
 def imap_send(func, gen):
     """Apply a function to all ``send`` values of a generator
 
@@ -365,14 +217,13 @@ def imap_send(func, gen):
     """
     gen = iter(gen)
     assert _is_just_started(gen)
-    yielder = yield_from(gen)
+    yielder = _raw_yield_from(gen)
     for item in yielder:
         with yielder:
             yielder.send(func((yield item)))
-    return_(yielder.result)
+    return yielder.result
 
 
-@py2_compatible
 def imap_return(func, gen):
     """Apply a function to the ``return`` value of a generator
 
@@ -389,14 +240,13 @@ def imap_return(func, gen):
     """
     gen = iter(gen)
     assert _is_just_started(gen)
-    yielder = yield_from(gen)
+    yielder = _raw_yield_from(gen)
     for item in yielder:
         with yielder:
             yielder.send((yield item))
-    return_(func(yielder.result))
+    return func(yielder.result)
 
 
-@py2_compatible
 def irelay(gen, thru):
     """Create a new generator by relaying yield/send interactions
     through another generator
@@ -416,19 +266,19 @@ def irelay(gen, thru):
     gen = iter(gen)
     assert _is_just_started(gen)
 
-    yielder = yield_from(gen)
+    yielder = _raw_yield_from(gen)
     for item in yielder:
         with yielder:
 
             subgen = thru(item)
-            subyielder = yield_from(subgen)
+            subyielder = _raw_yield_from(subgen)
             for subitem in subyielder:
                 with subyielder:
                     subyielder.send((yield subitem))
 
             yielder.send(subyielder.result)
 
-    return_(yielder.result)
+    return yielder.result
 
 
 class map_yield:
@@ -458,6 +308,7 @@ class map_yield:
     --------
     :func:`~gentools.core.imap_yield`
     """
+
     def __init__(self, *funcs):
         self._mapper = compose(*funcs)
 
@@ -492,6 +343,7 @@ class map_send:
     --------
     :func:`~gentools.core.imap_send`
     """
+
     def __init__(self, *funcs):
         self._mapper = compose(*funcs)
 
@@ -526,6 +378,7 @@ class map_return:
     --------
     :func:`~gentools.core.imap_return`
     """
+
     def __init__(self, *funcs):
         self._mapper = compose(*funcs)
 
@@ -570,6 +423,7 @@ class relay:
     --------
     :func:`~gentools.core.irelay`
     """
+
     def __init__(self, *genfuncs):
         self._genfuncs = genfuncs
 
