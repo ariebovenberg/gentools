@@ -39,9 +39,6 @@ black = "^22.10"
 flake8 = "^5.0.4"
 isort = "^5.7.0"
 
-[tool.poetry.group.dev.dependencies]
-tox = "^3.26"
-
 [tool.black]
 line-length = 79
 include = '\.pyi?$'
