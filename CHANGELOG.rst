@@ -7,7 +7,8 @@ development
 1.2.0 (2022-11-16)
 ++++++++++++++++++
 
-- Update supported Python versions, docs theme.
+- Dropped Python 2 compatibility, supported versions are now 3.7+
+- Update docs theme.
 
 1.1.0 (2018-03-02)
 ++++++++++++++++++

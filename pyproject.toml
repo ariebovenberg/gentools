@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gentools"
-version = "1.2.0"
+version = "1.2.1"
 description = "Tools for generators, generator functions, and generator-based coroutines"
 authors = ["Arie Bovenberg <a.c.bovenberg@gmail.com>"]
 license = "MIT"
@@ -35,7 +35,7 @@ pytest-cov = "^4.0.0"
 pytest-mock = "^3.10"
 
 [tool.poetry.group.linting.dependencies]
-black = "^22.10"
+black = "^23"
 flake8 = "^5.0.4"
 isort = "^5.7.0"
 

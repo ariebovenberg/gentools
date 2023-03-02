@@ -14,7 +14,7 @@ Gentools
     :target: https://travis-ci.org/ariebovenberg/gentools
 
 .. image:: https://img.shields.io/codecov/c/github/ariebovenberg/gentools.svg?style=flat-square
-    :target: https://coveralls.io/github/ariebovenberg/gentools?branch=master
+    :target: https://coveralls.io/github/ariebovenberg/gentools?branch=main
 
 .. image:: https://img.shields.io/readthedocs/gentools.svg?style=flat-square
     :target: http://gentools.readthedocs.io/en/latest/?badge=latest
