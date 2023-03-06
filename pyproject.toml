@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gentools"
-version = "1.2.0"
+version = "1.2.1"
 description = "Tools for generators, generator functions, and generator-based coroutines"
 authors = ["Arie Bovenberg <a.c.bovenberg@gmail.com>"]
 license = "MIT"
@@ -27,7 +27,7 @@ keywords = [
 
 [tool.poetry.dependencies]
 python = "^3.7,<4.0"
-importlib-metadata = {version = ">=1,<5", python = "<3.8"}
+importlib-metadata = {version = "*", python = "<3.8"}
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.0.1"

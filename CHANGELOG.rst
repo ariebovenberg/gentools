@@ -4,6 +4,11 @@ Release history
 development
 +++++++++++
 
+1.2.1 (2023-03-02)
+++++++++++++++++++
+
+- Relax version constrains on ``importlib-metadata`` backport for Python 3.7.
+
 1.2.0 (2022-11-16)
 ++++++++++++++++++
 
