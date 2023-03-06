@@ -33,7 +33,6 @@ def mygen(a, foo):
 
 class TestYieldFrom:
     def test_throw_oneway(self):
-
         gen = delegator(iter([1, 2, 3]))
 
         assert next(gen) == 1
@@ -42,7 +41,6 @@ class TestYieldFrom:
             assert gen.throw(ValueError)
 
     def test_throw_returns(self):
-
         gen = delegator(mymax(4))
 
         assert next(gen) == 4
@@ -58,7 +56,6 @@ class TestYieldFrom:
         assert result == "mymax: type error"
 
     def test_throw_continues(self):
-
         gen = delegator(mymax(4))
 
         assert next(gen) == 4
@@ -68,7 +65,6 @@ class TestYieldFrom:
         assert gentools.sendreturn(gen, 104) == 312
 
     def test_close_oneway(self):
-
         gen = delegator(iter([1, 2, 3]))
 
         assert next(gen) == 1
@@ -76,7 +72,6 @@ class TestYieldFrom:
         assert gen.close() is None
 
     def test_close(self):
-
         gen = delegator(mymax(4))
 
         assert next(gen) == 4
@@ -85,7 +80,6 @@ class TestYieldFrom:
         assert gen.close() is None
 
     def test_oneway(self):
-
         gen = oneway_delegator(iter([1, 2, 3]))
 
         assert next(gen) == 1
@@ -94,12 +88,10 @@ class TestYieldFrom:
         assert gentools.sendreturn(gen, None) is None
 
     def test_empty(self):
-
         gen = delegator(emptygen())
         assert gentools.sendreturn(gen, None) == 99
 
     def test_simple(self):
-
         gen = delegator(mymax(4))
 
         assert next(gen) == 4
@@ -212,7 +204,6 @@ class TestSendReturn:
         assert gentools.sendreturn(gen, 105) == 315
 
     def test_no_return(self):
-
         gen = mymax(4)
         assert next(gen) == 4
         with pytest.raises(RuntimeError, match="did not return"):
@@ -313,7 +304,6 @@ class TestIRelay:
         assert gentools.sendreturn(relayed, 102) == 306
 
     def test_accumulate(self):
-
         gen = reduce(
             gentools.irelay, [try_until_even, try_until_positive], mymax(4)
         )
@@ -326,7 +316,6 @@ class TestIRelay:
 
 
 def test_combine_mappers():
-
     gen = gentools.imap_return(
         "result: {}".format,
         gentools.imap_send(

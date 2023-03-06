@@ -269,7 +269,6 @@ def irelay(gen, thru):
     yielder = _raw_yield_from(gen)
     for item in yielder:
         with yielder:
-
             subgen = thru(item)
             subyielder = _raw_yield_from(subgen)
             for subitem in subyielder:
