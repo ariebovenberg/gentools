@@ -10,8 +10,8 @@ Gentools
 .. image:: https://img.shields.io/pypi/pyversions/gentools.svg?style=flat-square
     :target: https://pypi.python.org/pypi/gentools
 
-.. image:: https://img.shields.io/travis/ariebovenberg/gentools.svg?style=flat-square
-    :target: https://travis-ci.org/ariebovenberg/gentools
+.. image::  https://img.shields.io/github/actions/workflow/status/ariebovenberg/gentools/tests.yml?branch=main&style=flat-square
+   :target: https://github.com/ariebovenberg/gentools
 
 .. image:: https://img.shields.io/codecov/c/github/ariebovenberg/gentools.svg?style=flat-square
     :target: https://coveralls.io/github/ariebovenberg/gentools?branch=main
