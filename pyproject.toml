@@ -7,7 +7,6 @@ license = "MIT"
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Development Status :: 5 - Production/Stable",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -26,8 +25,7 @@ keywords = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7,<4.0"
-importlib-metadata = {version = "*", python = "<3.8"}
+python = "^3.8.1,<4.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.0.1"
@@ -36,7 +34,7 @@ pytest-mock = "^3.10"
 
 [tool.poetry.group.linting.dependencies]
 black = "^23"
-flake8 = "^5.0.4"
+flake8 = "^6"
 isort = "^5.7.0"
 
 [tool.black]
