@@ -23,7 +23,3 @@ jobs:
         pip install tox tox-gh-actions 'poetry>1.5,<1.6'
     - name: Test with tox
       run: tox
-    - uses: readthedocs/actions/preview@v1
-      if: matrix.python-version == 3.11
-      with:
-        project-slug: "gentools"
