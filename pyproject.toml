@@ -34,7 +34,7 @@ pytest-mock = "^3.10"
 
 [tool.poetry.group.linting.dependencies]
 black = "^23"
-flake8 = "^6"
+flake8 = ">=6,<8"
 isort = "^5.7.0"
 
 [tool.black]
