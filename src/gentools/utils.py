@@ -1,4 +1,5 @@
 """Miscellaneous tools, boilerplate, and shortcuts"""
+
 from functools import partial
 
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gentools"
-version = "1.2.1"
+version = "1.2.2"
 description = "Tools for generators, generator functions, and generator-based coroutines"
 authors = ["Arie Bovenberg <a.c.bovenberg@gmail.com>"]
 license = "MIT"
@@ -11,6 +11,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 packages = [
     { include = "gentools", from = "src" },
@@ -28,12 +29,12 @@ keywords = [
 python = "^3.8.1,<4.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7.0.1"
+pytest = "^8"
 pytest-cov = "^4.0.0"
 pytest-mock = "^3.10"
 
 [tool.poetry.group.linting.dependencies]
-black = "^23"
+black = "^24"
 flake8 = ">=6,<8"
 isort = "^5.7.0"
 

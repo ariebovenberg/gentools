@@ -4,6 +4,11 @@ Release history
 development
 +++++++++++
 
+1.2.2 (2024-01-29)
+++++++++++++++++++
+
+- Official Python 3.12 support.
+
 1.2.1 (2023-03-02)
 ++++++++++++++++++
 

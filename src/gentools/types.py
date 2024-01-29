@@ -1,4 +1,5 @@
 """base classes and interfaces"""
+
 import abc
 import typing as t
 from itertools import starmap
