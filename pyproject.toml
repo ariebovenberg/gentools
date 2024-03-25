@@ -30,7 +30,7 @@ python = "^3.8.1,<4.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8"
-pytest-cov = "^4.0.0"
+pytest-cov = ">=4,<6"
 pytest-mock = "^3.10"
 
 [tool.poetry.group.linting.dependencies]
