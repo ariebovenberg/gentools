@@ -1,2 +1,2 @@
-sphinx<8.2
+sphinx<8.3
 furo~=2024.8
